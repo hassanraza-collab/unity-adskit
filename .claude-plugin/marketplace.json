@@ -1,0 +1,13 @@
+{
+  "name": "ninedtech-adskit",
+  "owner": {
+    "name": "hassanraza-collab"
+  },
+  "plugins": [
+    {
+      "name": "adskit",
+      "source": "./ClaudePlugin~",
+      "description": "Skills to integrate and update the AdsKit Unity package (ads mediation, Remote Config, analytics) in any game."
+    }
+  ]
+}

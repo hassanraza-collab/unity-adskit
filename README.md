@@ -24,7 +24,32 @@ For local development, point to the folder instead:
 
 The ad SDKs (AppLovin MAX, Google Mobile Ads, Firebase) are **not bundled**. Install them in the game project. AdsKit detects each one automatically.
 
+## Quick start
+
+1. Run **Tools → AdsKit → Import ads_config JSON...** with your Remote Config JSON. `Documentation~/ads_config.example.json` is an example.
+2. Run **Tools → AdsKit → Validate Settings**.
+3. In code:
+   ```csharp
+   AnalyticsBootstrap.Initialize(analyticsSettings);
+   Ads.Initialize(adsSettings, new MyHooks());      // MyHooks : AdsGameHooksBase
+   Ads.SetContext(AdsIds.ContextHome);
+   Ads.ShowInterstitial("play_button", _ => StartLevel());
+   Ads.ShowRewarded("booster_hammer", () => GrantBooster());
+   ```
+4. Press Play. In the Editor, the **simulator** provider shows fake ads. Turn on `showDebugHud` to see the cache state.
+
 ## Docs
 
-- `Documentation~/` covers usage and integration, including an AI integration guide.
-- `CHANGELOG.md` lists changes per release.
+- `Documentation~/AI_INTEGRATION.md`: step-by-step integration (written for Claude, readable by humans).
+- `Documentation~/ANALYTICS_EVENTS.md`: every event, parameter and funnel.
+- `ADSKIT_DEVELOPMENT.md`: development status, architecture and the version lock table.
+- `CHANGELOG.md` / `MIGRATION.md`: release notes and upgrade steps.
+
+## Claude Code plugin
+
+This repo is also a Claude Code plugin marketplace with the `adskit-integrate` and `adskit-update` skills. Install it once per machine:
+
+```
+/plugin marketplace add hassanraza-collab/unity-adskit
+/plugin install adskit@ninedtech-adskit
+```

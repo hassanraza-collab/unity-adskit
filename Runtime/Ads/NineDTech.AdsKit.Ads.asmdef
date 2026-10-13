@@ -1,0 +1,16 @@
+{
+    "name": "NineDTech.AdsKit.Ads",
+    "rootNamespace": "NineDTech.AdsKit.Ads",
+    "references": [
+        "NineDTech.AdsKit.Core"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

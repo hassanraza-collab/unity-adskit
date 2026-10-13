@@ -1,0 +1,19 @@
+{
+    "name": "NineDTech.AdsKit.Editor",
+    "rootNamespace": "NineDTech.AdsKit.Editor",
+    "references": [
+        "NineDTech.AdsKit.Core",
+        "NineDTech.AdsKit.Ads"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

@@ -1,0 +1,97 @@
+{
+  "schema_version": 2,
+  "ads_enabled": true,
+
+  "session": {
+    "session_timeout_minutes": 30
+  },
+
+  "frequency": {
+    "global_interstitial_cooldown_sec": 60,
+    "cooldown_after_rewarded_sec": 45,
+    "cooldown_after_splash_ad_sec": 60,
+    "first_interstitial_min_session_sec": 30,
+    "max_interstitials_per_session": 8
+  },
+
+  "loading": {
+    "max_concurrent_loads": 1,
+    "load_stagger_sec": 1.0,
+    "retry_max_backoff_sec": 64,
+    "retry_max_attempts": 6,
+    "max_cached_interstitials": 2,
+    "low_ram_threshold_mb": 3072,
+    "low_ram_max_cached_interstitials": 1,
+    "refresh_only_when_needed": true,
+    "admob_inter_rewarded_refresh_min": 55,
+    "admob_app_open_refresh_min": 235,
+    "admob_use_preload_api": false
+  },
+
+  "cache_priority": {
+    "home": ["play_button"],
+    "gameplay": ["level_complete", "level_restart", "back_to_home"]
+  },
+
+  "splash": {
+    "enabled": true,
+    "format": "app_open",
+    "trigger_progress": 0.7,
+    "max_wait_sec": 3.0,
+    "min_sessions": 2,
+    "min_level": 0
+  },
+
+  "app_open_resume": {
+    "enabled": false,
+    "min_background_sec": 30,
+    "min_sessions": 3,
+    "min_level": 0
+  },
+
+  "banner": {
+    "enabled": true,
+    "banner_type": "adaptive",
+    "position": "bottom",
+    "pause_refresh_during_fullscreen": true,
+    "min_sessions": 2,
+    "min_level": 3
+  },
+
+  "rewarded": {
+    "enabled": true,
+    "load_wait_sec": 3.0
+  },
+
+  "interstitials": {
+    "play_button":    { "enabled": true, "cooldown_sec": 90,  "min_sessions": 2, "min_level": 8 },
+    "level_complete": { "enabled": true, "cooldown_sec": 60,  "min_sessions": 2, "min_level": 8 },
+    "level_restart":  { "enabled": true, "cooldown_sec": 90,  "min_sessions": 2, "min_level": 8 },
+    "back_to_home":   { "enabled": true, "cooldown_sec": 120, "min_sessions": 2, "min_level": 8 }
+  },
+
+  "ad_units": {
+    "max": {
+      "banner_standard": "MAX_BANNER_STANDARD_UNIT_ID",
+      "banner_adaptive": "MAX_BANNER_ADAPTIVE_UNIT_ID",
+      "rewarded": "MAX_REWARDED_UNIT_ID",
+      "splash_app_open": "MAX_APP_OPEN_UNIT_ID",
+      "splash_interstitial": "MAX_SPLASH_INTER_UNIT_ID",
+      "inter_play_button": "MAX_INTER_PLAY_BUTTON_UNIT_ID",
+      "inter_level_complete": "MAX_INTER_LEVEL_COMPLETE_UNIT_ID",
+      "inter_level_restart": "MAX_INTER_LEVEL_RESTART_UNIT_ID",
+      "inter_back_to_home": "MAX_INTER_BACK_TO_HOME_UNIT_ID"
+    },
+    "admob": {
+      "banner_standard": "ca-app-pub-3940256099942544/6300978111",
+      "banner_adaptive": "ca-app-pub-3940256099942544/9214589741",
+      "rewarded": "ca-app-pub-3940256099942544/5224354917",
+      "splash_app_open": "ca-app-pub-3940256099942544/9257395921",
+      "splash_interstitial": "ca-app-pub-3940256099942544/1033173712",
+      "inter_play_button": "ca-app-pub-3940256099942544/1033173712",
+      "inter_level_complete": "ca-app-pub-3940256099942544/1033173712",
+      "inter_level_restart": "ca-app-pub-3940256099942544/1033173712",
+      "inter_back_to_home": "ca-app-pub-3940256099942544/1033173712"
+    }
+  }
+}
