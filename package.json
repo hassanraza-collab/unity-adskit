@@ -1,0 +1,12 @@
+{
+  "name": "com.ninedtech.adskit",
+  "version": "0.1.0",
+  "displayName": "AdsKit",
+  "description": "ScriptableObject-driven ads mediation (AppLovin MAX / Google AdMob), Firebase Remote Config control and analytics for Unity Android games.",
+  "unity": "6000.0",
+  "author": {
+    "name": "hassanraza-collab",
+    "url": "https://github.com/hassanraza-collab/unity-adskit"
+  },
+  "keywords": ["ads", "admob", "applovin", "max", "mediation", "firebase", "analytics"]
+}

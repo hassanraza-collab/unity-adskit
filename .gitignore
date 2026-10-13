@@ -1,0 +1,13 @@
+# OS / IDE
+.DS_Store
+Thumbs.db
+.vs/
+.idea/
+*.swp
+
+# Never commit Unity project folders (this repo is a package, not a project)
+Library/
+Temp/
+Logs/
+obj/
+UserSettings/
