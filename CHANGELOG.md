@@ -2,6 +2,10 @@
 
 All notable changes to this package are documented here. Versions follow [Semantic Versioning](https://semver.org).
 
+## [0.4.3] - 2026-10-14
+### Fixed
+- IL2CPP builds stripped the Firebase/MAX/AdMob provider assemblies (nothing references them; they self-register), so device builds fell back to the simulator. `AdsKitLinkerProcessor` now generates a link.xml preserving every installed AdsKit assembly (Unity ignores link.xml inside packages).
+
 ## [0.4.2] - 2026-10-14
 ### Fixed
 - A/B mediation: when Remote Config has no `ads_mediation` value after the fetch (parameter not published yet / first launch offline), the session runs on `defaultMediation` without locking, instead of never initializing ads.

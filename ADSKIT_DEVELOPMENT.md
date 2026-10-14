@@ -113,7 +113,13 @@ Every show callback fires exactly once. A 6 s open watchdog and a 60 s load watc
 | External Dependency Manager (EDM4U) | 1.2.189 | bundled with Firebase; keep this single copy |
 | AppLovin MAX Unity plugin | 8.6.6 (applovin-sdk 13.6.4) | .unitypackage in Assets/MaxSdk; no adapters yet; SDK key pending |
 | Google Mobile Ads Unity plugin | 11.5.0 (play-services-ads 25.4.0, UMP 4.0.0) | classic SDK, not Next-Gen; Android App ID = Google TEST id until the AdMob account exists |
-| Adapters (MAX / GMA) per network | TBD | must resolve to the same network SDK version |
+| **Adapter lock (target, 2026-10-14)** | | Google side imported as .unitypackage (NOT OpenUPM: those packages depend on com.google.ads.mobile and would add a 2nd GMA next to Assets/GoogleMobileAds) |
+| AdMob in MAX | google-adapter 25.4.0.0 | play-services-ads 25.4.0 (do NOT take 25.5.0.0 while GMA Unity is 11.5.0) |
+| AppLovin in AdMob | Google applovin 13.6.4.2 / Unity plugin 8.7.7 | applovin-sdk 13.6.4 = MAX core |
+| Pangle | MAX bytedance-adapter 8.3.0.3.0 / Google pangle 8.3.0.3.0, Unity 7.2.0 | pag-sdk 8.3.0.3 (Google 8.3.0.4.0 would pull GMA 25.5.0) |
+| Mintegral | MAX 17.1.81.0 / Google 17.1.81.1, Unity 2.2.6 | mbridge 17.1.81 |
+| Liftoff Monetize | MAX vungle-adapter 7.7.8.1 / Google 7.7.8.1, Unity 5.7.9 | vungle-ads 7.7.8 |
+| Unity Ads | MAX unityads-adapter 4.20.1.1 (POM to verify) / Google 4.20.1.0, Unity 3.21.1 | unity-ads 4.20.1; no com.unity.ads package in the project |
 
 ## Known gaps / TODO
 - **Simulator input:** the full-screen overlay is IMGUI, so game uGUI under it can still receive taps (the game is paused through the hooks). It's acceptable for the simulator.
