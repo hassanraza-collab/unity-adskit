@@ -407,6 +407,8 @@ namespace NineDTech.AdsKit.Ads
             }
 
             var unitKey = p.ActiveUnitKey;
+            // The bar is waiting right now: skip any retry backoff so a failed first load gets another chance.
+            if (State == InitState.Ready) ForceLoad(unitKey);
             AddWaiter(unitKey, p.MaxWaitSec, ready =>
             {
                 _splashDone = true;

@@ -44,7 +44,7 @@ An exportable, ScriptableObject-driven ads and analytics package:
 | 2 | Firebase provider assembly: Remote Config source, Analytics sink, Crashlytics keys | **done 2026-10-14** (compile-checked against Firebase 13.17.0; device test pending) |
 | 3 | MAX provider, then AdMob provider; UMP consent provider | **done 2026-10-14** (compile-checked vs MAX 8.6.6 / GMA 11.5.0 / UMP; device test pending) |
 | 4 | Phase-1 adapters, version lock table, device QA matrix | todo |
-| 5 | Game integration (Rotate Rings): splash, placements, banner safe area, analytics glue | todo |
+| 5 | Game integration (Rotate Rings): splash, placements, banner safe area, analytics glue | **done 2026-10-14** (editor play-test with simulator OK; device test pending) |
 | 6 | A/B experiment launch; phase-2 adapters | todo |
 
 ## Architecture (phase 1)

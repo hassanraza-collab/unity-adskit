@@ -2,6 +2,10 @@
 
 All notable changes to this package are documented here. Versions follow [Semantic Versioning](https://semver.org).
 
+## [0.4.1] - 2026-10-14
+### Fixed
+- Splash ad: while the loading bar waits, a failed first load retries immediately instead of waiting out its backoff (found in the Rotate Rings editor test).
+
 ## [0.4.0] - 2026-10-14
 ### Added
 - `NineDTech.AdsKit.Max`: AppLovin MAX provider (interstitial, rewarded, app-open, standard/adaptive banner, revenue, Mediation Debugger).
