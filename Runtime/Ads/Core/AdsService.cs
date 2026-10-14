@@ -238,7 +238,16 @@ namespace NineDTech.AdsKit.Ads
             var locked = PlayerPrefs.GetString(MediationLockKey, "");
             if (!string.IsNullOrEmpty(locked)) return Installed(locked);
 
-            if (!RemoteConfigService.TryGetRemoteString(_settings.mediationRemoteKey, out var value)) return null;
+            if (!RemoteConfigService.TryGetRemoteString(_settings.mediationRemoteKey, out var value))
+            {
+                // Still fetching: wait. Fetch done but no value (parameter not published yet, or offline on the
+                // very first launch): run this session on the default provider WITHOUT locking it, so the A/B
+                // group is still assigned the first time Remote Config provides one.
+                if (RemoteConfigService.State == RemoteFetchState.Fetching || RemoteConfigService.State == RemoteFetchState.NotStarted)
+                    return null;
+                KitLog.Warn("No '" + _settings.mediationRemoteKey + "' value from Remote Config; using " + _settings.defaultMediation + " for this session (not locked)");
+                return Installed(_settings.defaultMediation);
+            }
             value = value.Trim().ToLowerInvariant();
             PlayerPrefs.SetString(MediationLockKey, value);
             PlayerPrefs.Save();

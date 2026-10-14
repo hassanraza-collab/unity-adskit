@@ -2,6 +2,10 @@
 
 All notable changes to this package are documented here. Versions follow [Semantic Versioning](https://semver.org).
 
+## [0.4.2] - 2026-10-14
+### Fixed
+- A/B mediation: when Remote Config has no `ads_mediation` value after the fetch (parameter not published yet / first launch offline), the session runs on `defaultMediation` without locking, instead of never initializing ads.
+
 ## [0.4.1] - 2026-10-14
 ### Fixed
 - Splash ad: while the loading bar waits, a failed first load retries immediately instead of waiting out its backoff (found in the Rotate Rings editor test).
