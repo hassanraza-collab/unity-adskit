@@ -37,7 +37,7 @@ namespace NineDTech.AdsKit.Ads
     public class LoadingSettings
     {
         [Tooltip("Start requesting ads after this many seconds even if the SDK has not reported every mediation adapter as started (AdMob waits for all of them, up to ~30 s). 0 = always wait.")]
-        [Min(0)] public float sdkInitMaxWaitSec = 5f;
+        [Min(0)] public float sdkInitMaxWaitSec = 3f;
 
         [Tooltip("Ad requests in flight at the same time.")]
         [Min(1)] public int maxConcurrentLoads = 1;

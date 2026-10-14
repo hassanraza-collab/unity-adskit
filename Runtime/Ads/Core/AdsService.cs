@@ -146,7 +146,21 @@ namespace NineDTech.AdsKit.Ads
             State = InitState.FetchingRemote;
             RemoteConfigService.Activated += OnRemoteActivated;
             RemoteConfigService.Fetch(_settings.remoteFetchTimeoutSec, _ => ContinueInit());
+
+            // Every session after the first already knows its provider (A/B group locked, or no A/B test): start
+            // consent + SDK init now, in parallel with the fetch, so the cold-start (splash) ad has time to load.
+            // The fresh Remote Config values are applied whenever they arrive.
+            if (State == InitState.FetchingRemote && MediationKnownWithoutFetch())
+            {
+                KitLog.Info("Mediation already known; initializing without waiting for Remote Config");
+                ContinueInit();
+            }
         }
+
+        private bool MediationKnownWithoutFetch() =>
+            (Application.isEditor && _settings.useSimulatorInEditor)
+            || !_settings.abTestMediation
+            || !string.IsNullOrEmpty(PlayerPrefs.GetString(MediationLockKey, ""));
 
         private void OnRemoteActivated()
         {

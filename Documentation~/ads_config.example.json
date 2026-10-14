@@ -15,7 +15,7 @@
   },
 
   "loading": {
-    "sdk_init_max_wait_sec": 5,
+    "sdk_init_max_wait_sec": 3,
     "max_concurrent_loads": 1,
     "load_stagger_sec": 1.0,
     "retry_max_backoff_sec": 64,
@@ -38,7 +38,7 @@
     "enabled": true,
     "format": "app_open",
     "trigger_progress": 0.7,
-    "max_wait_sec": 3.0,
+    "max_wait_sec": 4.0,
     "min_sessions": 2,
     "min_level": 0
   },

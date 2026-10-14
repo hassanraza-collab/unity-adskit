@@ -1,6 +1,6 @@
 {
   "name": "com.ninedtech.adskit",
-  "version": "0.4.4",
+  "version": "0.4.5",
   "displayName": "AdsKit",
   "description": "ScriptableObject-driven ads mediation (AppLovin MAX / Google AdMob), Firebase Remote Config control and analytics for Unity Android games.",
   "unity": "6000.0",

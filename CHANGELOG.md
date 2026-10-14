@@ -2,6 +2,11 @@
 
 All notable changes to this package are documented here. Versions follow [Semantic Versioning](https://semver.org).
 
+## [0.4.5] - 2026-10-14
+### Changed
+- Cold start: when the mediation provider is already known (A/B group locked, or no A/B test), consent + SDK init start immediately in parallel with the Remote Config fetch instead of after it (device test: the splash window closed before init finished).
+- `sdk_init_max_wait_sec` default 5 -> 3.
+
 ## [0.4.4] - 2026-10-14
 ### Fixed (found in the first device test, BlueStacks + real AdMob test ads)
 - SDK init: AdMob only calls back after every mediation adapter started or timed out (~30 s), which cost the splash ad. New `loading.sdk_init_max_wait_sec` (default 5): ads start loading after that even if adapters are still starting; a late callback is a no-op. The old 30 s timeout no longer discards a slow-but-valid init.
