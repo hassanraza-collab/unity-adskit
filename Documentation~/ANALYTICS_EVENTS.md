@@ -33,6 +33,8 @@
 | `ad_impression` | `ad_platform`, `ad_source`, `ad_format`, `ad_unit_name`, `currency`, `value`. Logged only when the SDK does not already log it for Firebase (MAX and the simulator yes, AdMob no). |
 | `adskit_impression` | the same as above + `placement`, `precision`. Logged for every provider, for a clean comparison in BigQuery. |
 | `ad_load_fail` | `placement` (= ad unit key), `ad_format`, `error`, `attempt`, `load_ms` (switch: `loading.log_load_failures`) |
+| `welcome_back_shown` | `placement` (= `app_open_resume`), `ad_format`. The Welcome Back screen opened on a return from the background. |
+| `welcome_back_closed` | `placement`, `ad_format`, `reason` (`ad_shown` \| `ad_failed` \| `timeout`), `shown_sec`. |
 | `ad_revenue_tier_<N>` | `value`, `currency`. Logged once when the total ad revenue passes `revenue_tiers_usd[N-1]`. |
 
 ## Logged through helpers the game calls

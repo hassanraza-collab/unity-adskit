@@ -22,6 +22,8 @@ namespace NineDTech.AdsKit.AdMob
         private BannerView _banner;
         private string _bannerId;
         private Action<AdLoadResult> _pendingBanner;
+        private BannerView _mrec;
+        private Action<AdLoadResult> _pendingMrec;
 
         public string Id => AdsIds.AdMob;
         public bool ManagesExpiry => false;
@@ -62,31 +64,31 @@ namespace NineDTech.AdsKit.AdMob
             switch (format)
             {
                 case AdFormat.Interstitial:
-                    InterstitialAd.Load(adUnitId, new AdRequest(), (ad, error) =>
+                    InterstitialAd.Load(adUnitId, new AdRequest(), (ad, error) => KitRunner.Dispatch(() =>
                     {
                         if (ad == null || error != null) { onComplete?.Invoke(AdLoadResult.Fail(Describe(error))); return; }
                         Replace(_interstitials, adUnitId, ad, a => a.Destroy());
                         ad.OnAdPaid += v => Pay(AdFormat.Interstitial, adUnitId, v, ad.GetResponseInfo());
                         onComplete?.Invoke(AdLoadResult.Ok(Network(ad.GetResponseInfo())));
-                    });
+                    }));
                     break;
                 case AdFormat.Rewarded:
-                    RewardedAd.Load(adUnitId, new AdRequest(), (ad, error) =>
+                    RewardedAd.Load(adUnitId, new AdRequest(), (ad, error) => KitRunner.Dispatch(() =>
                     {
                         if (ad == null || error != null) { onComplete?.Invoke(AdLoadResult.Fail(Describe(error))); return; }
                         Replace(_rewarded, adUnitId, ad, a => a.Destroy());
                         ad.OnAdPaid += v => Pay(AdFormat.Rewarded, adUnitId, v, ad.GetResponseInfo());
                         onComplete?.Invoke(AdLoadResult.Ok(Network(ad.GetResponseInfo())));
-                    });
+                    }));
                     break;
                 case AdFormat.AppOpen:
-                    AppOpenAd.Load(adUnitId, new AdRequest(), (ad, error) =>
+                    AppOpenAd.Load(adUnitId, new AdRequest(), (ad, error) => KitRunner.Dispatch(() =>
                     {
                         if (ad == null || error != null) { onComplete?.Invoke(AdLoadResult.Fail(Describe(error))); return; }
                         Replace(_appOpen, adUnitId, ad, a => a.Destroy());
                         ad.OnAdPaid += v => Pay(AdFormat.AppOpen, adUnitId, v, ad.GetResponseInfo());
                         onComplete?.Invoke(AdLoadResult.Ok(Network(ad.GetResponseInfo())));
-                    });
+                    }));
                     break;
                 default:
                     onComplete?.Invoke(AdLoadResult.Fail("unsupported format " + format));
@@ -111,26 +113,26 @@ namespace NineDTech.AdsKit.AdMob
             {
                 case AdFormat.Interstitial when _interstitials.TryGetValue(adUnitId, out var i):
                     _interstitials.Remove(adUnitId);
-                    i.OnAdFullScreenContentOpened += () => listener.OnOpened(Network(i.GetResponseInfo()));
-                    i.OnAdClicked += listener.OnClicked;
-                    i.OnAdFullScreenContentFailed += e => { listener.OnFailedToShow(Describe(e)); i.Destroy(); };
-                    i.OnAdFullScreenContentClosed += () => { listener.OnClosed(); i.Destroy(); };
+                    i.OnAdFullScreenContentOpened += () => KitRunner.Dispatch(() => listener.OnOpened(Network(i.GetResponseInfo())));
+                    i.OnAdClicked += () => KitRunner.Dispatch(listener.OnClicked);
+                    i.OnAdFullScreenContentFailed += e => KitRunner.Dispatch(() => { listener.OnFailedToShow(Describe(e)); i.Destroy(); });
+                    i.OnAdFullScreenContentClosed += () => KitRunner.Dispatch(() => { listener.OnClosed(); i.Destroy(); });
                     i.Show();
                     break;
                 case AdFormat.Rewarded when _rewarded.TryGetValue(adUnitId, out var r):
                     _rewarded.Remove(adUnitId);
-                    r.OnAdFullScreenContentOpened += () => listener.OnOpened(Network(r.GetResponseInfo()));
-                    r.OnAdClicked += listener.OnClicked;
-                    r.OnAdFullScreenContentFailed += e => { listener.OnFailedToShow(Describe(e)); r.Destroy(); };
-                    r.OnAdFullScreenContentClosed += () => { listener.OnClosed(); r.Destroy(); };
-                    r.Show(_ => listener.OnRewardEarned());
+                    r.OnAdFullScreenContentOpened += () => KitRunner.Dispatch(() => listener.OnOpened(Network(r.GetResponseInfo())));
+                    r.OnAdClicked += () => KitRunner.Dispatch(listener.OnClicked);
+                    r.OnAdFullScreenContentFailed += e => KitRunner.Dispatch(() => { listener.OnFailedToShow(Describe(e)); r.Destroy(); });
+                    r.OnAdFullScreenContentClosed += () => KitRunner.Dispatch(() => { listener.OnClosed(); r.Destroy(); });
+                    r.Show(_ => KitRunner.Dispatch(listener.OnRewardEarned));
                     break;
                 case AdFormat.AppOpen when _appOpen.TryGetValue(adUnitId, out var a):
                     _appOpen.Remove(adUnitId);
-                    a.OnAdFullScreenContentOpened += () => listener.OnOpened(Network(a.GetResponseInfo()));
-                    a.OnAdClicked += listener.OnClicked;
-                    a.OnAdFullScreenContentFailed += e => { listener.OnFailedToShow(Describe(e)); a.Destroy(); };
-                    a.OnAdFullScreenContentClosed += () => { listener.OnClosed(); a.Destroy(); };
+                    a.OnAdFullScreenContentOpened += () => KitRunner.Dispatch(() => listener.OnOpened(Network(a.GetResponseInfo())));
+                    a.OnAdClicked += () => KitRunner.Dispatch(listener.OnClicked);
+                    a.OnAdFullScreenContentFailed += e => KitRunner.Dispatch(() => { listener.OnFailedToShow(Describe(e)); a.Destroy(); });
+                    a.OnAdFullScreenContentClosed += () => KitRunner.Dispatch(() => { listener.OnClosed(); a.Destroy(); });
                     a.Show();
                     break;
                 default:
@@ -160,21 +162,22 @@ namespace NineDTech.AdsKit.AdMob
             _banner = banner;
             _bannerId = adUnitId;
             _pendingBanner = onComplete;
-            banner.OnBannerAdLoaded += () =>
+            banner.OnBannerAdLoaded += () => KitRunner.Dispatch(() =>
             {
                 if (_banner != banner || _pendingBanner == null) return;
                 var cb = _pendingBanner;
                 _pendingBanner = null;
                 cb(AdLoadResult.Ok(Network(banner.GetResponseInfo())));
-            };
-            banner.OnBannerAdLoadFailed += error =>
+            }));
+            banner.OnBannerAdLoadFailed += error => KitRunner.Dispatch(() =>
             {
                 if (_banner != banner || _pendingBanner == null) return; // refresh failures: Google retries on its own
                 var cb = _pendingBanner;
                 DestroyBanner();
                 cb(AdLoadResult.Fail(Describe(error)));
-            };
+            }));
             banner.OnAdPaid += v => Pay(AdFormat.Banner, adUnitId, v, banner.GetResponseInfo());
+            banner.OnAdClicked += () => KitRunner.Dispatch(() => AdViewClicked?.Invoke());
             banner.Hide(); // AdsKit decides when it is visible
             banner.LoadAd(new AdRequest());
         }
@@ -199,6 +202,52 @@ namespace NineDTech.AdsKit.AdMob
         }
 
         public float BannerHeightPixels => _banner != null ? _banner.GetHeightInPixels() : 0f;
+
+        public event Action AdViewClicked;
+
+        public void LoadMrec(string adUnitId, Action<AdLoadResult> onComplete)
+        {
+            DestroyMrec();
+            var mrec = new BannerView(adUnitId, AdSize.MediumRectangle, AdPosition.Center);
+            _mrec = mrec;
+            _pendingMrec = onComplete;
+            mrec.OnBannerAdLoaded += () => KitRunner.Dispatch(() =>
+            {
+                if (_mrec != mrec || _pendingMrec == null) return;
+                var cb = _pendingMrec;
+                _pendingMrec = null;
+                cb(AdLoadResult.Ok(Network(mrec.GetResponseInfo())));
+            }));
+            mrec.OnBannerAdLoadFailed += error => KitRunner.Dispatch(() =>
+            {
+                if (_mrec != mrec || _pendingMrec == null) return;
+                var cb = _pendingMrec;
+                DestroyMrec();
+                cb(AdLoadResult.Fail(Describe(error)));
+            }));
+            mrec.OnAdPaid += v => Pay(AdFormat.Mrec, adUnitId, v, mrec.GetResponseInfo());
+            mrec.OnAdClicked += () => KitRunner.Dispatch(() => AdViewClicked?.Invoke());
+            mrec.Hide(); // AdsKit decides when it is visible
+            mrec.LoadAd(new AdRequest());
+        }
+
+        public void ShowMrec(Vector2 centerPixels)
+        {
+            if (_mrec == null) return;
+            var scale = Mathf.Max(0.1f, MobileAds.Utils.GetDeviceScale());
+            _mrec.SetPosition(Mathf.RoundToInt(centerPixels.x / scale - 150f), Mathf.RoundToInt(centerPixels.y / scale - 125f));
+            _mrec.Show();
+        }
+
+        public void HideMrec() => _mrec?.Hide();
+
+        public void DestroyMrec()
+        {
+            if (_mrec == null) return;
+            _mrec.Destroy();
+            _mrec = null;
+            _pendingMrec = null;
+        }
 
         public void OpenDebugger()
         {

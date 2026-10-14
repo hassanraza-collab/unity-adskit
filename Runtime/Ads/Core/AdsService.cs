@@ -39,7 +39,16 @@ namespace NineDTech.AdsKit.Ads
         {
             public string UnitKey;
             public double Deadline;
+            /// <summary>Resolve (not ready) as soon as the unit is neither loading nor ready, instead of at the deadline.</summary>
+            public bool FailFast;
             public Action<bool> Callback;
+        }
+
+        private enum MrecState
+        {
+            Idle,
+            Loading,
+            Ready
         }
 
         private const string MediationLockKey = "adskit.mediation";
@@ -79,6 +88,18 @@ namespace NineDTech.AdsKit.Ads
         private double _lastSplashClose = NegativeInfinity;
         private double _lastFullscreenClose = NegativeInfinity;
         private int _interstitialsThisSession;
+
+        private bool _skipNextResume;
+        private bool _welcomeBackActive;
+
+        private MrecState _mrecState;
+        private string _mrecUnitId;
+        private int _mrecRequest;
+        private int _mrecAttempts;
+        private double _mrecNextRetryAt;
+        private bool _mrecWanted;
+        private bool _mrecVisible;
+        private Vector2 _mrecCenter;
 
         private int _initAttempt;
         private double _revenueTotal;
@@ -210,6 +231,7 @@ namespace NineDTech.AdsKit.Ads
                 return;
             }
             _provider.RevenuePaid += e => KitRunner.Dispatch(() => OnRevenuePaid(e));
+            _provider.AdViewClicked += () => KitRunner.Dispatch(SuppressNextResume);
 
             var debug = Debug.isDebugBuild;
             AdsConsent.DebugForceEea = debug && _settings.consentDebugForceEea;
@@ -315,8 +337,9 @@ namespace NineDTech.AdsKit.Ads
             // AdMob only calls back once EVERY mediation adapter started or timed out (~30 s for a slow one), which
             // would cost the splash ad and early placements. After sdk_init_max_wait_sec, start requesting anyway:
             // adapters that are still starting just miss the first auctions. A late callback is then a no-op.
+            // AdMob only: MAX must not load anything before OnSdkInitializedEvent (it answers in ~1-2 s anyway).
             var maxWait = Mathf.Max(0f, _config.Loading.sdkInitMaxWaitSec);
-            if (maxWait > 0f)
+            if (maxWait > 0f && MediationId == AdsIds.AdMob)
                 KitRunner.After(maxWait, () =>
                 {
                     if (State == InitState.InitializingSdk && attempt == _initAttempt)
@@ -476,6 +499,107 @@ namespace NineDTech.AdsKit.Ads
         private bool _bannerSuppressedEarly;
         internal bool BannerSuppressedEarly => _bannerSuppressedEarly;
 
+        /// <summary>
+        /// The player is about to leave the app on purpose (purchase sheet, store page, share, permission dialog):
+        /// the next return from the background shows no Welcome Back screen and no app-open ad.
+        /// Ad clicks (full-screen, banner, MREC) set this automatically.
+        /// </summary>
+        public void SuppressNextResume()
+        {
+            if (!_skipNextResume) KitLog.Info("Next resume will not show an app-open ad");
+            _skipNextResume = true;
+        }
+
+        public bool WelcomeBackActive => _welcomeBackActive;
+
+        /// <summary>Debug: run the return-from-background flow as if the app was away for <paramref name="awaySeconds"/>.</summary>
+        public void SimulateResume(double awaySeconds) => OnResumed(awaySeconds);
+
+        // ------------------------------------------------------------------ MREC
+
+        public bool IsMrecReady => _mrecState == MrecState.Ready;
+
+        /// <summary>Load the MREC in advance (e.g. on the home screen) so the exit panel shows it at once.</summary>
+        public void PreloadMrec()
+        {
+            var p = _config?.Mrec;
+            if (CheckGates(p, false) == AdBlockReason.None) LoadMrec(p);
+        }
+
+        /// <summary>Show the MREC centred on a screen point (pixels, origin top-left). Loads it first when needed.</summary>
+        public void ShowMrec(Vector2 centerPixels)
+        {
+            var p = _config?.Mrec;
+            var reason = CheckGates(p, false);
+            if (reason != AdBlockReason.None)
+            {
+                LogOpportunity(AdsIds.PlacementMrec, AdFormat.Mrec, reason);
+                return;
+            }
+            _mrecWanted = true;
+            _mrecCenter = centerPixels;
+            if (_mrecState == MrecState.Ready) ShowMrecNow();
+            else
+            {
+                LogOpportunity(AdsIds.PlacementMrec, AdFormat.Mrec, Online ? AdBlockReason.NotReady : AdBlockReason.Offline);
+                _mrecNextRetryAt = 0; // the panel is open right now: skip any retry backoff
+                LoadMrec(p);
+            }
+        }
+
+        public void HideMrec()
+        {
+            _mrecWanted = false;
+            if (!_mrecVisible) return;
+            _mrecVisible = false;
+            _provider?.HideMrec();
+        }
+
+        private void ShowMrecNow()
+        {
+            _mrecVisible = true;
+            _provider.ShowMrec(_mrecCenter);
+            LogOpportunity(AdsIds.PlacementMrec, AdFormat.Mrec, AdBlockReason.None);
+            AdsAnalyticsEvents.Begin(AdsAnalyticsEvents.Show, AdsIds.PlacementMrec, AdFormat.Mrec).Log();
+        }
+
+        private void LoadMrec(PlacementRuntime p)
+        {
+            var unitId = _config.GetUnitId(MediationId, p.UnitKey);
+            if (string.IsNullOrEmpty(unitId) || _mrecState == MrecState.Loading) return;
+            if (_mrecState == MrecState.Ready && _mrecUnitId == unitId) return;
+            if (!Online || KitRunner.Now < _mrecNextRetryAt) return;
+            _mrecState = MrecState.Loading;
+            _mrecUnitId = unitId;
+            var request = ++_mrecRequest;
+            KitLog.Info("Loading MREC");
+            KitRunner.After(LoadTimeoutSec, () => OnMrecLoaded(request, AdLoadResult.Fail("timeout")));
+            _provider.LoadMrec(unitId, r => KitRunner.Dispatch(() => OnMrecLoaded(request, r)));
+        }
+
+        private void OnMrecLoaded(int request, AdLoadResult result)
+        {
+            if (request != _mrecRequest || _mrecState != MrecState.Loading) return;
+            if (result.Success)
+            {
+                _mrecState = MrecState.Ready;
+                _mrecAttempts = 0;
+                KitLog.Info("MREC loaded" + (string.IsNullOrEmpty(result.Network) ? "" : " (" + result.Network + ")"));
+                if (_mrecWanted && !_mrecVisible && CheckGates(_config.Mrec, false) == AdBlockReason.None) ShowMrecNow();
+                return;
+            }
+            _mrecState = MrecState.Idle;
+            _mrecAttempts++;
+            var delay = Math.Min(Math.Pow(2, Math.Min(6, _mrecAttempts)), _config.Loading.retryMaxBackoffSec);
+            _mrecNextRetryAt = KitRunner.Now + delay;
+            KitLog.Warn("MREC load failed: " + result.Error + " (retry in " + delay + "s)");
+            if (_config.Loading.logLoadFailures)
+                AdsAnalyticsEvents.Begin(AdsAnalyticsEvents.LoadFail, AdsIds.PlacementMrec, AdFormat.Mrec)
+                    .Add("error", result.Error ?? "")
+                    .Add(KitEvents.ParamAttempt, _mrecAttempts)
+                    .Log();
+        }
+
         public void OpenDebugger() => _provider?.OpenDebugger();
 
         // ------------------------------------------------------------------ gates
@@ -502,8 +626,9 @@ namespace NineDTech.AdsKit.Ads
         {
             var f = _config.Frequency;
             var now = KitRunner.Now;
-            if (SessionTracker.SecondsInSession < f.firstInterstitialMinSessionSec) return AdBlockReason.SessionStartGrace;
             if (f.maxInterstitialsPerSession > 0 && _interstitialsThisSession >= f.maxInterstitialsPerSession) return AdBlockReason.SessionCap;
+            if (p.Priority) return AdBlockReason.None; // priority places ignore every cooldown timer
+            if (SessionTracker.SecondsInSession < f.firstInterstitialMinSessionSec) return AdBlockReason.SessionStartGrace;
             if (now - _lastSplashClose < f.cooldownAfterSplashAdSec) return AdBlockReason.AfterSplashCooldown;
             if (now - _lastRewardedClose < f.cooldownAfterRewardedSec) return AdBlockReason.AfterRewardedCooldown;
             if (now - _lastInterstitialClose < f.globalInterstitialCooldownSec) return AdBlockReason.GlobalCooldown;
@@ -771,9 +896,9 @@ namespace NineDTech.AdsKit.Ads
             slot.Exhausted = false;
         }
 
-        private void AddWaiter(string unitKey, float seconds, Action<bool> callback)
+        private void AddWaiter(string unitKey, float seconds, Action<bool> callback, bool failFast = false)
         {
-            _waiters.Add(new Waiter { UnitKey = unitKey, Deadline = KitRunner.Now + seconds, Callback = callback });
+            _waiters.Add(new Waiter { UnitKey = unitKey, Deadline = KitRunner.Now + seconds, FailFast = failFast, Callback = callback });
         }
 
         private void ProcessWaiters()
@@ -783,8 +908,10 @@ namespace NineDTech.AdsKit.Ads
             for (var i = _waiters.Count - 1; i >= 0; i--)
             {
                 var w = _waiters[i];
-                var ready = State == InitState.Ready && _active == null && IsSlotReady(GetSlot(w.UnitKey));
-                if (!ready && now < w.Deadline) continue;
+                var slot = GetSlot(w.UnitKey);
+                var ready = State == InitState.Ready && _active == null && IsSlotReady(slot);
+                var failed = w.FailFast && (State != InitState.Ready || slot == null || slot.State == AdSlotState.Idle);
+                if (!ready && !failed && now < w.Deadline) continue;
                 _waiters.RemoveAt(i);
                 try { w.Callback(ready); }
                 catch (Exception e) { Debug.LogException(e); }
@@ -810,19 +937,74 @@ namespace NineDTech.AdsKit.Ads
                     Discard(slot);
         }
 
+        /// <summary>
+        /// Return from the background: Welcome Back screen, then the app-open ad. The ad does not wait for the
+        /// interstitial cooldown; the screen stays at least welcome_back_min_sec and at most timeout_sec, and closes
+        /// at once when the ad fails to load. Never after our own ads, ad clicks or <see cref="SuppressNextResume"/>.
+        /// </summary>
         private void OnResumed(double awaySeconds)
         {
-            if (State != InitState.Ready || _active != null || _context == AdsIds.ContextSplash) return;
+            var suppressed = _skipNextResume;
+            _skipNextResume = false;
+            if (State != InitState.Ready || _active != null || _welcomeBackActive || _context == AdsIds.ContextSplash) return;
+            if (suppressed)
+            {
+                KitLog.Info("Resume: returning from an ad click / external screen; no app-open ad");
+                return;
+            }
             if (KitRunner.Now - _lastFullscreenClose < 3.0) return; // the pause was our own ad
             var p = _config.AppOpenResume;
             if (p == null || !p.Enabled || awaySeconds < p.MinBackgroundSec) return;
 
             var reason = CheckGates(p, false);
-            if (reason == AdBlockReason.None && KitRunner.Now - _lastInterstitialClose < _config.Frequency.globalInterstitialCooldownSec)
-                reason = AdBlockReason.GlobalCooldown;
+            if (reason == AdBlockReason.None && string.IsNullOrEmpty(SlotId(p.UnitKey))) reason = AdBlockReason.PlacementUnknown;
+            if (reason != AdBlockReason.None)
+            {
+                LogOpportunity(p.Id, AdFormat.AppOpen, reason);
+                return;
+            }
+
+            _welcomeBackActive = true;
+            var shownAt = KitRunner.Now;
+            AdsAnalyticsEvents.Begin(AdsAnalyticsEvents.WelcomeBackShown, p.Id, AdFormat.AppOpen).Log();
+            try { _hooks?.ShowWelcomeBack(); }
+            catch (Exception e) { Debug.LogException(e); }
+
+            ForceLoad(p.UnitKey);
+            AddWaiter(p.UnitKey, Mathf.Max(0.5f, p.TimeoutSec), ready =>
+            {
+                if (!ready)
+                {
+                    var timedOut = KitRunner.Now - shownAt >= p.TimeoutSec - 0.05;
+                    LogOpportunity(p.Id, AdFormat.AppOpen, _active != null ? AdBlockReason.Busy : Online ? AdBlockReason.NotReady : AdBlockReason.Offline);
+                    EndWelcomeBack(p.Id, timedOut ? "timeout" : "ad_failed", shownAt);
+                    return;
+                }
+                var wait = p.WelcomeBackMinSec - (float)(KitRunner.Now - shownAt);
+                if (wait > 0f) KitRunner.After(wait, () => ShowResumeAd(p, shownAt));
+                else ShowResumeAd(p, shownAt);
+            }, failFast: true);
+        }
+
+        private void ShowResumeAd(PlacementRuntime p, double shownAt)
+        {
+            var reason = State != InitState.Ready ? AdBlockReason.NotInitialized : CheckRules(p, false);
             if (reason == AdBlockReason.None) reason = CheckReady(p.UnitKey);
             LogOpportunity(p.Id, AdFormat.AppOpen, reason);
+            EndWelcomeBack(p.Id, reason == AdBlockReason.None ? "ad_shown" : "ad_failed", shownAt);
             if (reason == AdBlockReason.None) BeginFullscreen(GetSlot(p.UnitKey), p.Id, ShowKind.Resume, null, null);
+        }
+
+        private void EndWelcomeBack(string placementId, string reason, double shownAt)
+        {
+            if (!_welcomeBackActive) return;
+            _welcomeBackActive = false;
+            AdsAnalyticsEvents.Begin(AdsAnalyticsEvents.WelcomeBackClosed, placementId, AdFormat.AppOpen)
+                .Add("reason", reason)
+                .Add("shown_sec", Math.Round(KitRunner.Now - shownAt, 1))
+                .Log();
+            try { _hooks?.HideWelcomeBack(); }
+            catch (Exception e) { Debug.LogException(e); }
         }
 
         private void OnRevenuePaid(AdRevenueEvent e)
@@ -832,6 +1014,7 @@ namespace NineDTech.AdsKit.Ads
                 if (_config.GetUnitId(MediationId, key) == e.AdUnitId && _config.UnitFormats[key] == e.Format) { unitKey = key; break; }
             // Banner refreshes keep paying while a full-screen ad is open: never credit them to that placement.
             var placement = e.Format == AdFormat.Banner ? AdsIds.PlacementBanner
+                : e.Format == AdFormat.Mrec ? AdsIds.PlacementMrec
                 : !string.IsNullOrEmpty(e.Placement) ? e.Placement
                 : _active != null ? _active.PlacementId : "";
             var currency = string.IsNullOrEmpty(e.Currency) ? "USD" : e.Currency;
@@ -936,6 +1119,10 @@ namespace NineDTech.AdsKit.Ads
                 case ShowKind.Rewarded:
                     _lastRewardedClose = now;
                     break;
+                case ShowKind.Resume:
+                    // Closing the app-open ad restarts the interstitial cooldown from zero (fail/timeout does not).
+                    _lastInterstitialClose = now;
+                    break;
                 default:
                     _lastSplashClose = now;
                     break;
@@ -1024,6 +1211,8 @@ namespace NineDTech.AdsKit.Ads
 
             public void OnFailedToShow(string error) => KitRunner.Dispatch(() => Finish(false, error));
 
+            // No SuppressNextResume here: the player returns into the ad, and its callbacks are only processed after
+            // Unity resumed, so a flag set now would wrongly swallow the next real resume. _active / the 3 s window cover it.
             public void OnClicked() => KitRunner.Dispatch(() =>
                 AdsAnalyticsEvents.Begin(AdsAnalyticsEvents.Clicked, PlacementId, Slot.Format).Log());
 
@@ -1078,6 +1267,10 @@ namespace NineDTech.AdsKit.Ads
                 sb.Append('\n');
             }
             if (_banner != null) sb.Append("banner: ").Append(_banner.DebugState).Append('\n');
+            if (_config.Mrec != null) sb.Append("mrec: ").Append(_mrecState).Append(_mrecVisible ? " visible" : "")
+                .Append(_mrecAttempts > 0 ? " fails " + _mrecAttempts : "").Append('\n');
+            if (_skipNextResume || _welcomeBackActive)
+                sb.Append(_welcomeBackActive ? "WELCOME BACK" : "").Append(_skipNextResume ? " next resume suppressed" : "").Append('\n');
         }
 
         private static int Remaining(double last, float cooldown, double now) => Mathf.Max(0, (int)(cooldown - (now - last)));

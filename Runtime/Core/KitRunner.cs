@@ -38,8 +38,15 @@ namespace NineDTech.AdsKit
 
         public static bool IsMainThread => Thread.CurrentThread.ManagedThreadId == _mainThreadId;
 
-        /// <summary>Realtime clock (seconds) that ignores timeScale; use for every cooldown.</summary>
-        public static double Now => Time.realtimeSinceStartupAsDouble;
+        /// <summary>
+        /// Realtime clock (seconds) that ignores timeScale; use for every cooldown. Keeps counting while the app is in
+        /// the background (wall-clock time away is added on resume where the platform clock stood still).
+        /// </summary>
+        public static double Now => Time.realtimeSinceStartupAsDouble + _backgroundOffset;
+
+        private static double _backgroundOffset;
+        private static double _pausedAtRealtime;
+        private static DateTime? _pausedAtUtc;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStatics()
@@ -50,6 +57,8 @@ namespace NineDTech.AdsKit
             PauseChanged = null;
             LowMemory = null;
             Quitting = null;
+            _backgroundOffset = 0;
+            _pausedAtUtc = null;
             lock (QueueLock) Pending.Clear();
             Timers.Clear();
         }
@@ -126,7 +135,23 @@ namespace NineDTech.AdsKit
             Tick?.Invoke(Time.unscaledDeltaTime);
         }
 
-        private void OnApplicationPause(bool paused) => PauseChanged?.Invoke(paused);
+        private void OnApplicationPause(bool paused)
+        {
+            var realtime = Time.realtimeSinceStartupAsDouble;
+            if (paused)
+            {
+                _pausedAtUtc = DateTime.UtcNow;
+                _pausedAtRealtime = realtime;
+            }
+            else if (_pausedAtUtc.HasValue)
+            {
+                // Some platforms stop realtimeSinceStartup while suspended; cooldowns must still run in the background.
+                var missed = (DateTime.UtcNow - _pausedAtUtc.Value).TotalSeconds - (realtime - _pausedAtRealtime);
+                if (missed > 1.0) _backgroundOffset += missed;
+                _pausedAtUtc = null;
+            }
+            PauseChanged?.Invoke(paused);
+        }
 
         private void OnApplicationQuit() => Quitting?.Invoke();
 

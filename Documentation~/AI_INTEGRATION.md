@@ -103,6 +103,26 @@ Ads.NotifyRewardedOffer("booster_hammer");
 Rules:
 - Interstitial pacing (cooldowns, gates, session cap) is handled by AdsKit. **Never add your own counters.**
 - The rewarded callback runs after the ad closes, and only if the reward was earned.
+- **Priority places** (win/fail screen, level/mode select): set `priority` on those interstitial placements. They show even while a cooldown is running, and closing them restarts the cooldown.
+
+## 6b. Return from background (Welcome Back + app-open ad)
+With `app_open_resume` enabled, AdsKit runs this flow by itself after the player was away at least `min_background_sec`. The game only draws the screen:
+
+```csharp
+public override void ShowWelcomeBack() => WelcomeBackPanel.Show();   // dim the game, "Welcome back", loading indicator, block input
+public override void HideWelcomeBack() => WelcomeBackPanel.Hide();
+```
+
+The screen stays at least `welcome_back_min_sec` (2 s) and at most `timeout_sec` (14 s). It closes at once if the ad fails to load. The ad ignores the interstitial cooldown, and closing it restarts that cooldown. The flow never runs on a cold start, after AdsKit's own ads, or after a banner or MREC click.
+
+Call **`Ads.SuppressNextResume()`** right before the game sends the player out of the app on purpose: purchase or subscription sheet, Play Store rating page, share sheet, permission dialog.
+
+## 6c. Exit panel MREC
+Open an exit panel on the device Back button (Escape). Inside it, reserve an empty rect for the 300x250 MREC, with clear space between it and the Exit/Stay buttons:
+- On open: `Ads.ShowMrec(mrecAnchor)`.
+- On close: `Ads.HideMrec()`.
+- Call `Ads.PreloadMrec()` when the home screen opens, so the ad is ready when the panel opens.
+- The ad is native and draws above the UI, so never put buttons under the anchor.
 
 ## 7. Banner
 The banner shows automatically in every context except splash, once it passes its gates. Two things to wire:
@@ -128,6 +148,9 @@ Turn on `AdsSettings.showDebugHud` and press Play. Then check:
 - [ ] Rewarded **Skip** gives no reward; **Close** after the timer gives it.
 - [ ] The banner appears and the UI moves up.
 - [ ] Events appear in the console: `[Analytics] ad_opportunity`, `ad_show`, `adskit_impression`, `level_end`, ...
+- [ ] HUD **Resume**: the Welcome Back screen appears, then the app-open ad (at least 2 s later). With `simulator.fillRate` 0 the screen closes as soon as the load fails.
+- [ ] Clicking the simulated banner or MREC makes the next **Resume** skip the ad. The console shows "Next resume will not show an app-open ad".
+- [ ] A priority interstitial shows inside the cooldown, and a normal one is blocked (`GlobalCooldown`).
 - [ ] Testing a remote payload: assign a JSON `TextAsset` to `AdsSettings.editorRemoteJson` and check the console shows `ads_config applied`.
 
 ## 10. When SDKs are installed (later phases)

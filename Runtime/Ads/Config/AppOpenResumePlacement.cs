@@ -11,6 +11,12 @@ namespace NineDTech.AdsKit.Ads
         [Tooltip("Minimum seconds in the background before the ad may show. Remote key: min_background_sec")]
         [Min(0)] public float minBackgroundSec = 30f;
 
+        [Tooltip("Minimum seconds the Welcome Back screen stays up so the player can read it. Remote key: welcome_back_min_sec")]
+        [Min(0)] public float welcomeBackMinSec = 2f;
+
+        [Tooltip("Maximum seconds the Welcome Back screen waits for the ad to load; then the game continues. Remote key: timeout_sec")]
+        [Min(0.5f)] public float timeoutSec = 14f;
+
         public override AdFormat Format => AdFormat.AppOpen;
 
         private void Reset() => enabled = false;

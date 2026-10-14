@@ -19,6 +19,11 @@ namespace NineDTech.AdsKit.Ads
         private float _bannerHeight;
         private BannerPosition _bannerPosition;
         private string _bannerLabel;
+        private Action _onBannerClick;
+
+        private bool _mrecVisible;
+        private Rect _mrecRect;
+        private Action _onMrecClick;
 
         private GUIStyle _title;
         private GUIStyle _button;
@@ -47,12 +52,21 @@ namespace NineDTech.AdsKit.Ads
             _onClosed = onClosed;
         }
 
-        public void SetBanner(bool visible, float heightPixels, BannerPosition position, string label)
+        public void SetBanner(bool visible, float heightPixels, BannerPosition position, string label, Action onClick = null)
         {
             _bannerVisible = visible;
             _bannerHeight = heightPixels;
             _bannerPosition = position;
             _bannerLabel = label;
+            _onBannerClick = onClick;
+        }
+
+        /// <summary>Fake MREC at <paramref name="rect"/> (screen pixels, origin top-left); tapping it counts as a click.</summary>
+        public void SetMrec(bool visible, Rect rect, Action onClick)
+        {
+            _mrecVisible = visible;
+            _mrecRect = rect;
+            _onMrecClick = onClick;
         }
 
         private void OnDestroy()
@@ -62,7 +76,7 @@ namespace NineDTech.AdsKit.Ads
 
         private void OnGUI()
         {
-            if (!_fullscreen && !_bannerVisible) return;
+            if (!_fullscreen && !_bannerVisible && !_mrecVisible) return;
             EnsureStyles();
             GUI.depth = -1000;
 
@@ -72,6 +86,14 @@ namespace NineDTech.AdsKit.Ads
                 var rect = new Rect(0, y, Screen.width, _bannerHeight);
                 GUI.DrawTexture(rect, _bannerTex);
                 GUI.Label(rect, "Simulated " + _bannerLabel + " banner", _title);
+                if (!_fullscreen && GUI.Button(rect, GUIContent.none, GUIStyle.none)) _onBannerClick?.Invoke();
+            }
+
+            if (_mrecVisible)
+            {
+                GUI.DrawTexture(_mrecRect, _bannerTex);
+                GUI.Label(_mrecRect, "Simulated MREC\n300x250", _title);
+                if (!_fullscreen && GUI.Button(_mrecRect, GUIContent.none, GUIStyle.none)) _onMrecClick?.Invoke();
             }
 
             if (!_fullscreen) return;

@@ -78,6 +78,8 @@ namespace NineDTech.AdsKit.Editor
             }
             if (s.appOpenResume != null && s.appOpenResume.enabled)
                 CheckUnit("app_open_resume", s.appOpenResume.adUnit, AdFormat.AppOpen, true);
+            if (s.mrec != null && s.mrec.enabled)
+                CheckUnit("mrec", s.mrec.adUnit, AdFormat.Mrec, true);
 
             foreach (var r in s.rewarded)
             {

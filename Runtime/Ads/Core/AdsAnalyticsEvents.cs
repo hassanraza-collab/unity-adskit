@@ -18,6 +18,8 @@ namespace NineDTech.AdsKit.Ads
         public const string KitImpression = "adskit_impression";
         public const string LoadFail = "ad_load_fail";
         public const string RevenueTierPrefix = "ad_revenue_tier_";
+        public const string WelcomeBackShown = "welcome_back_shown";
+        public const string WelcomeBackClosed = "welcome_back_closed";
 
         public const string ParamPlacement = "placement";
         public const string ParamFormat = "ad_format";
@@ -30,6 +32,7 @@ namespace NineDTech.AdsKit.Ads
                 case AdFormat.Banner: return "banner";
                 case AdFormat.Interstitial: return "interstitial";
                 case AdFormat.Rewarded: return "rewarded";
+                case AdFormat.Mrec: return "mrec";
                 default: return "app_open";
             }
         }

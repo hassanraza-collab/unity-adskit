@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace NineDTech.AdsKit.Ads
 {
@@ -86,6 +87,16 @@ namespace NineDTech.AdsKit.Ads
         void DestroyBanner();
         /// <summary>Height of the current banner in screen pixels (0 when none).</summary>
         float BannerHeightPixels { get; }
+
+        /// <summary>The banner or the MREC was clicked (the player is leaving the app). Any thread.</summary>
+        event Action AdViewClicked;
+
+        /// <summary>Create (hidden) and load the single MREC (300x250 dp). Refreshes itself afterwards.</summary>
+        void LoadMrec(string adUnitId, Action<AdLoadResult> onComplete);
+        /// <summary>Show the loaded MREC centred on <paramref name="centerPixels"/> (screen pixels, origin top-left).</summary>
+        void ShowMrec(Vector2 centerPixels);
+        void HideMrec();
+        void DestroyMrec();
 
         /// <summary>Open the SDK's debugging UI (MAX Mediation Debugger / AdMob Ad Inspector).</summary>
         void OpenDebugger();

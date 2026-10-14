@@ -40,5 +40,9 @@ namespace NineDTech.AdsKit.Ads
         {
             KitLog.Info("Rewarded unavailable: " + placementId);
         }
+
+        public virtual void ShowWelcomeBack() { }
+
+        public virtual void HideWelcomeBack() { }
     }
 }

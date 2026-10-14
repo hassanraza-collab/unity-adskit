@@ -119,10 +119,24 @@ namespace NineDTech.AdsKit.Editor
                 r.EditorSetId(AdsIds.PlacementAppOpenResume);
                 ReadBase(resumeJson, r);
                 resumeJson.Read("min_background_sec", ref r.minBackgroundSec);
+                resumeJson.Read("welcome_back_min_sec", ref r.welcomeBackMinSec);
+                resumeJson.Read("timeout_sec", ref r.timeoutSec);
                 r.adUnit = FindUnit(units, folder, "app_open_resume", AdFormat.AppOpen)
                            ?? FindUnit(units, folder, "splash_app_open", AdFormat.AppOpen);
                 EditorUtility.SetDirty(r);
                 settings.appOpenResume = r;
+            }
+
+            // MREC (exit panel)
+            var mrecJson = root.GetObject("mrec");
+            if (mrecJson != null)
+            {
+                var m = LoadOrCreate<MrecPlacement>(folder + "/Placements/Mrec.asset");
+                m.EditorSetId(AdsIds.PlacementMrec);
+                ReadBase(mrecJson, m);
+                m.adUnit = FindUnit(units, folder, "mrec", AdFormat.Mrec);
+                EditorUtility.SetDirty(m);
+                settings.mrec = m;
             }
 
             // Rewarded: one default placement using the "rewarded" unit (games add more placements by hand)
@@ -156,6 +170,7 @@ namespace NineDTech.AdsKit.Editor
                     p.EditorSetId(pair.Key);
                     ReadBase(obj, p);
                     obj.Read("cooldown_sec", ref p.cooldownSec);
+                    obj.Read("priority", ref p.priority);
                     p.adUnit = FindUnit(units, folder, "inter_" + pair.Key, AdFormat.Interstitial);
                     EditorUtility.SetDirty(p);
                     if (!settings.interstitials.Contains(p)) settings.interstitials.Add(p);
@@ -239,6 +254,7 @@ namespace NineDTech.AdsKit.Editor
         private static AdFormat GuessFormat(string key)
         {
             if (key.StartsWith("banner")) return AdFormat.Banner;
+            if (key.StartsWith("mrec")) return AdFormat.Mrec;
             if (key.StartsWith("rewarded")) return AdFormat.Rewarded;
             if (key.Contains("app_open")) return AdFormat.AppOpen;
             return AdFormat.Interstitial;
@@ -315,8 +331,18 @@ namespace NineDTech.AdsKit.Editor
             }
             if (s.appOpenResume != null)
             {
-                root["app_open_resume"] = Base(s.appOpenResume, new Dictionary<string, object> { ["min_background_sec"] = s.appOpenResume.minBackgroundSec });
+                root["app_open_resume"] = Base(s.appOpenResume, new Dictionary<string, object>
+                {
+                    ["min_background_sec"] = s.appOpenResume.minBackgroundSec,
+                    ["welcome_back_min_sec"] = s.appOpenResume.welcomeBackMinSec,
+                    ["timeout_sec"] = s.appOpenResume.timeoutSec
+                });
                 Collect(units, s.appOpenResume.adUnit);
+            }
+            if (s.mrec != null)
+            {
+                root["mrec"] = Base(s.mrec, new Dictionary<string, object>());
+                Collect(units, s.mrec.adUnit);
             }
             if (s.banner != null)
             {
@@ -345,7 +371,7 @@ namespace NineDTech.AdsKit.Editor
             foreach (var i in s.interstitials)
             {
                 if (i == null) continue;
-                inters[i.Id] = Base(i, new Dictionary<string, object> { ["cooldown_sec"] = i.cooldownSec });
+                inters[i.Id] = Base(i, new Dictionary<string, object> { ["cooldown_sec"] = i.cooldownSec, ["priority"] = i.priority });
                 Collect(units, i.adUnit);
             }
             root["interstitials"] = inters;

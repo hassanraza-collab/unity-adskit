@@ -73,7 +73,12 @@ namespace NineDTech.AdsKit.Ads
             {
                 ReadBase(resume, c.AppOpenResume);
                 resume.Read("min_background_sec", ref c.AppOpenResume.MinBackgroundSec);
+                resume.Read("welcome_back_min_sec", ref c.AppOpenResume.WelcomeBackMinSec);
+                resume.Read("timeout_sec", ref c.AppOpenResume.TimeoutSec);
             }
+
+            var mrec = root.GetObject("mrec");
+            if (mrec != null && c.Mrec != null) ReadBase(mrec, c.Mrec);
 
             var banner = root.GetObject("banner");
             if (banner != null && c.Banner != null)
@@ -116,6 +121,7 @@ namespace NineDTech.AdsKit.Ads
                     var obj = pair.Value as Dictionary<string, object>;
                     ReadBase(obj, p);
                     obj.Read("cooldown_sec", ref p.CooldownSec);
+                    obj.Read("priority", ref p.Priority);
                 }
 
             var units = root.GetObject("ad_units");

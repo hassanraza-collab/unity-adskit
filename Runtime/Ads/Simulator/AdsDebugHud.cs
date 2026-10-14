@@ -12,6 +12,7 @@ namespace NineDTech.AdsKit.Ads
         private GUIStyle _style;
         private float _refresh;
         private string _text = "";
+        private bool _mrecShown;
 
         internal static void Create(AdsService service)
         {
@@ -46,6 +47,14 @@ namespace NineDTech.AdsKit.Ads
             var h = _style.CalcHeight(content, Screen.width * 0.9f);
             GUI.Box(new Rect(4, 8 + size * 0.5f, Screen.width * 0.9f, h), content, _style);
             if (GUI.Button(new Rect(8 + size, 4, size * 1.6f, size * 0.5f), "Debugger")) Ads.OpenDebugger();
+            if (GUI.Button(new Rect(12 + size * 2.6f, 4, size * 1.6f, size * 0.5f), "Resume"))
+                _service.SimulateResume(_service.Config?.AppOpenResume?.MinBackgroundSec ?? 30);
+            if (GUI.Button(new Rect(16 + size * 4.2f, 4, size * 1.6f, size * 0.5f), "MREC"))
+            {
+                if (_mrecShown) Ads.HideMrec();
+                else Ads.ShowMrec(new Vector2(Screen.width * 0.5f, Screen.height * 0.5f));
+                _mrecShown = !_mrecShown;
+            }
         }
     }
 }

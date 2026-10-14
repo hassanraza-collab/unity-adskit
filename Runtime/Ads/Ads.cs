@@ -95,6 +95,36 @@ namespace NineDTech.AdsKit.Ads
         /// <summary>Hide the banner temporarily (it stays loaded), e.g. behind a full-screen menu.</summary>
         public static void SetBannerSuppressed(bool suppressed) => Service?.SetBannerSuppressed(suppressed);
 
+        /// <summary>
+        /// Call right before sending the player out of the app on purpose (purchase / subscription sheet, Play Store
+        /// rating page, share sheet, permission dialog): the return shows no Welcome Back screen and no app-open ad.
+        /// </summary>
+        public static void SuppressNextResume() => Service?.SuppressNextResume();
+
+        /// <summary>True while the Welcome Back screen waits for the app-open ad.</summary>
+        public static bool WelcomeBackActive => Service != null && Service.WelcomeBackActive;
+
+        /// <summary>Load the MREC ahead of time (e.g. on the home screen) so the exit panel can show it at once.</summary>
+        public static void PreloadMrec() => Service?.PreloadMrec();
+
+        public static bool IsMrecReady => Service != null && Service.IsMrecReady;
+
+        /// <summary>Show the 300x250 MREC centred on <paramref name="anchor"/> (an empty UI rect reserved for it).</summary>
+        public static void ShowMrec(RectTransform anchor)
+        {
+            if (Service == null || anchor == null) return;
+            var canvas = anchor.GetComponentInParent<Canvas>();
+            var cam = canvas == null || canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.rootCanvas.worldCamera;
+            var world = anchor.TransformPoint(anchor.rect.center);
+            var screen = RectTransformUtility.WorldToScreenPoint(cam, world);
+            Service.ShowMrec(new Vector2(screen.x, Screen.height - screen.y));
+        }
+
+        /// <summary>Show the MREC centred on a screen point (pixels, origin top-left).</summary>
+        public static void ShowMrec(Vector2 centerPixelsFromTopLeft) => Service?.ShowMrec(centerPixelsFromTopLeft);
+
+        public static void HideMrec() => Service?.HideMrec();
+
         /// <summary>GDPR: show a "Privacy options" button in settings when true.</summary>
         public static bool PrivacyOptionsRequired => AdsConsent.Provider.PrivacyOptionsRequired;
 

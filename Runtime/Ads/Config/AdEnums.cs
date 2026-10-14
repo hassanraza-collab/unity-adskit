@@ -5,7 +5,9 @@ namespace NineDTech.AdsKit.Ads
         Banner,
         Interstitial,
         Rewarded,
-        AppOpen
+        AppOpen,
+        /// <summary>300x250 medium rectangle (exit panel); positioned by the game.</summary>
+        Mrec
     }
 
     public enum BannerType
@@ -45,5 +47,6 @@ namespace NineDTech.AdsKit.Ads
         public const string PlacementSplash = "splash";
         public const string PlacementBanner = "banner";
         public const string PlacementAppOpenResume = "app_open_resume";
+        public const string PlacementMrec = "mrec";
     }
 }

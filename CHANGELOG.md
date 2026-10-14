@@ -2,6 +2,28 @@
 
 All notable changes to this package are documented here. Versions follow [Semantic Versioning](https://semver.org).
 
+## [0.6.1] - 2026-10-14
+Start-up and threading safety fixes from the SDK init audit.
+### Fixed
+- **AdMob callbacks now run on the Unity main thread.** Load (interstitial, rewarded, app open), show (opened, clicked, failed, closed, reward) and banner/MREC (loaded, failed, clicked) callbacks used to run on the Android UI thread. There they changed the loaded-ad dictionaries and destroyed banners while the main thread read them. `OnAdPaid` stays immediate (revenue is already dispatched).
+- **UMP callbacks** (consent info update, consent form, privacy options form) now run on the Unity main thread.
+- **Analytics** `Event(...).Log()` from any thread hops to the main thread *before* the common-param enrichers run, because enrichers may call Unity APIs such as PlayerPrefs. The builder pool is main-thread only.
+- **MAX no longer becomes "ready" before its init callback.** The `sdk_init_max_wait_sec` "load anyway" fallback now applies to AdMob only.
+### Added
+- `AdsKitConsentDefaultsProcessor` (Editor): writes Google Consent Mode v2 default-denied keys for Firebase Analytics into the generated Android manifest: `google_analytics_default_allow_analytics_storage`, `_ad_storage`, `_ad_user_data`, `_ad_personalization_signals` = false. `FirebaseConsentMode` grants them once UMP reports not required or granted.
+## [0.6.0] - 2026-10-14
+Release-checklist ads rules (cooldown, priority places, Welcome Back + app open, exit-panel MREC).
+### Added
+- **Priority interstitials**: `InterstitialPlacement.priority` / remote `interstitials.<id>.priority`. A priority place (win/fail, level select) shows even while any cooldown is running (session grace, after-splash, after-rewarded, global, per-placement); the session cap and audience gates still apply, and closing it restarts the cooldowns.
+- **Welcome Back flow** for the app-open ad on resume: `IAdsGameHooks.ShowWelcomeBack()` / `HideWelcomeBack()` (default no-op). The screen shows at least `welcome_back_min_sec` (2) and at most `timeout_sec` (14) while the ad loads, closes at once when the load fails, and the game continues on timeout. Events `welcome_back_shown`, `welcome_back_closed` (`reason` = ad_shown | ad_failed | timeout, `shown_sec`).
+- `Ads.SuppressNextResume()`: call before purchase / store / share / permission flows; the next return shows no Welcome Back or app-open ad. Banner and MREC clicks set it automatically (new `IMediationProvider.AdViewClicked`).
+- **MREC** (300x250): `AdFormat.Mrec`, `MrecPlacement` (`AdsSettings.mrec`, remote block `mrec`), `Ads.PreloadMrec()`, `Ads.ShowMrec(RectTransform | Vector2)`, `Ads.HideMrec()`, `Ads.IsMrecReady`. MAX, AdMob and simulator implementations (simulator draws a clickable rectangle).
+- Debug HUD buttons: **Resume** (runs the resume flow) and **MREC** (toggle at screen centre). Simulated banner/MREC are clickable (counts as an ad click).
+### Changed
+- The app-open ad on resume **no longer waits for the interstitial cooldown**, and closing it **restarts the interstitial cooldown** (it used to start the after-splash cooldown). A failed or timed-out app-open ad does not touch the timer.
+- `KitRunner.Now` keeps counting while the app is in the background on platforms where `realtimeSinceStartup` stands still, so cooldowns run in the background.
+- `IMediationProvider` gained `AdViewClicked`, `LoadMrec`, `ShowMrec`, `HideMrec`, `DestroyMrec` (custom providers must implement them).
+
 ## [0.5.0] - 2026-10-14
 First release for use in other projects.
 ### Added

@@ -44,9 +44,17 @@
   },
 
   "app_open_resume": {
-    "enabled": false,
+    "enabled": true,
     "min_background_sec": 30,
+    "welcome_back_min_sec": 2,
+    "timeout_sec": 14,
     "min_sessions": 3,
+    "min_level": 0
+  },
+
+  "mrec": {
+    "enabled": true,
+    "min_sessions": 1,
     "min_level": 0
   },
 
@@ -65,8 +73,8 @@
   },
 
   "interstitials": {
-    "play_button":    { "enabled": true, "cooldown_sec": 90,  "min_sessions": 2, "min_level": 8 },
-    "level_complete": { "enabled": true, "cooldown_sec": 60,  "min_sessions": 2, "min_level": 8 },
+    "play_button":    { "enabled": true, "cooldown_sec": 90,  "priority": true,  "min_sessions": 2, "min_level": 8 },
+    "level_complete": { "enabled": true, "cooldown_sec": 60,  "priority": true,  "min_sessions": 2, "min_level": 8 },
     "level_restart":  { "enabled": true, "cooldown_sec": 90,  "min_sessions": 2, "min_level": 8 },
     "back_to_home":   { "enabled": true, "cooldown_sec": 120, "min_sessions": 2, "min_level": 8 }
   },
@@ -81,7 +89,8 @@
       "inter_play_button": "MAX_INTER_PLAY_BUTTON_UNIT_ID",
       "inter_level_complete": "MAX_INTER_LEVEL_COMPLETE_UNIT_ID",
       "inter_level_restart": "MAX_INTER_LEVEL_RESTART_UNIT_ID",
-      "inter_back_to_home": "MAX_INTER_BACK_TO_HOME_UNIT_ID"
+      "inter_back_to_home": "MAX_INTER_BACK_TO_HOME_UNIT_ID",
+      "mrec": "MAX_MREC_UNIT_ID"
     },
     "admob": {
       "banner_standard": "ca-app-pub-3940256099942544/6300978111",
@@ -92,7 +101,8 @@
       "inter_play_button": "ca-app-pub-3940256099942544/1033173712",
       "inter_level_complete": "ca-app-pub-3940256099942544/1033173712",
       "inter_level_restart": "ca-app-pub-3940256099942544/1033173712",
-      "inter_back_to_home": "ca-app-pub-3940256099942544/1033173712"
+      "inter_back_to_home": "ca-app-pub-3940256099942544/1033173712",
+      "mrec": "ca-app-pub-3940256099942544/6300978111"
     }
   }
 }

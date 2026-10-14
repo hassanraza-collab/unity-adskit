@@ -13,6 +13,8 @@ namespace NineDTech.AdsKit.Max
     {
         private const float StandardBannerDp = 50f;
         private const float TabletBannerDp = 90f;
+        private const float MrecWidthDp = 300f;
+        private const float MrecHeightDp = 250f;
 
         private readonly Dictionary<string, Action<AdLoadResult>> _pendingLoads = new Dictionary<string, Action<AdLoadResult>>();
         private readonly Dictionary<string, IFullscreenAdListener> _showing = new Dictionary<string, IFullscreenAdListener>();
@@ -22,6 +24,8 @@ namespace NineDTech.AdsKit.Max
         private string _bannerId;
         private BannerType _bannerType;
         private Action<AdLoadResult> _pendingBanner;
+        private string _mrecId;
+        private Action<AdLoadResult> _pendingMrec;
 
         public string Id => AdsIds.Max;
         public bool ManagesExpiry => true;
@@ -141,6 +145,38 @@ namespace NineDTech.AdsKit.Max
             }
         }
 
+        public event Action AdViewClicked;
+
+        public void LoadMrec(string adUnitId, Action<AdLoadResult> onComplete)
+        {
+            DestroyMrec();
+            _mrecId = adUnitId;
+            _pendingMrec = onComplete;
+            // Like banners, an MREC starts hidden and loads (and refreshes) automatically after creation.
+            MaxSdk.CreateMRec(adUnitId, new MaxSdkBase.AdViewConfiguration(MaxSdkBase.AdViewPosition.Centered));
+        }
+
+        public void ShowMrec(Vector2 centerPixels)
+        {
+            if (_mrecId == null) return;
+            var density = Mathf.Max(0.1f, MaxSdkUtils.GetScreenDensity());
+            MaxSdk.UpdateMRecPosition(_mrecId, centerPixels.x / density - MrecWidthDp * 0.5f, centerPixels.y / density - MrecHeightDp * 0.5f);
+            MaxSdk.ShowMRec(_mrecId);
+        }
+
+        public void HideMrec()
+        {
+            if (_mrecId != null) MaxSdk.HideMRec(_mrecId);
+        }
+
+        public void DestroyMrec()
+        {
+            if (_mrecId == null) return;
+            MaxSdk.DestroyMRec(_mrecId);
+            _mrecId = null;
+            _pendingMrec = null;
+        }
+
         public void OpenDebugger() => MaxSdk.ShowMediationDebugger();
 
         // ------------------------------------------------------------------ callbacks
@@ -200,6 +236,24 @@ namespace NineDTech.AdsKit.Max
                 cb(AdLoadResult.Fail(Describe(error)));
             };
             MaxSdkCallbacks.Banner.OnAdRevenuePaidEvent += (id, info) => Pay(AdFormat.Banner, id, info);
+            MaxSdkCallbacks.Banner.OnAdClickedEvent += (id, info) => AdViewClicked?.Invoke();
+
+            MaxSdkCallbacks.MRec.OnAdLoadedEvent += (id, info) =>
+            {
+                if (id != _mrecId || _pendingMrec == null) return;
+                var cb = _pendingMrec;
+                _pendingMrec = null;
+                cb(AdLoadResult.Ok(info?.NetworkName));
+            };
+            MaxSdkCallbacks.MRec.OnAdLoadFailedEvent += (id, error) =>
+            {
+                if (id != _mrecId || _pendingMrec == null) return; // later refresh failures: MAX keeps retrying itself
+                var cb = _pendingMrec;
+                DestroyMrec();
+                cb(AdLoadResult.Fail(Describe(error)));
+            };
+            MaxSdkCallbacks.MRec.OnAdRevenuePaidEvent += (id, info) => Pay(AdFormat.Mrec, id, info);
+            MaxSdkCallbacks.MRec.OnAdClickedEvent += (id, info) => AdViewClicked?.Invoke();
         }
 
         private void OnLoaded(string id, MaxSdkBase.AdInfo info)

@@ -23,6 +23,8 @@ namespace NineDTech.AdsKit.Ads
         private bool _bannerVisible;
         private bool _bannerRefresh = true;
         private double _nextBannerImpressionAt;
+        private string _mrecUnitId;
+        private string _mrecLoading;
 
         public string Id => AdsIds.Simulator;
         public bool ManagesExpiry => false;
@@ -123,6 +125,50 @@ namespace NineDTech.AdsKit.Ads
             }
         }
 
+        public event Action AdViewClicked;
+
+        public void LoadMrec(string adUnitId, Action<AdLoadResult> onComplete)
+        {
+            DestroyMrec();
+            _mrecLoading = adUnitId;
+            KitRunner.After(LoadDelay(), () =>
+            {
+                if (_mrecLoading != adUnitId) return;
+                _mrecLoading = null;
+                if (UnityEngine.Random.value > Settings.fillRate)
+                {
+                    onComplete?.Invoke(AdLoadResult.Fail("no_fill (simulated)"));
+                    return;
+                }
+                _mrecUnitId = adUnitId;
+                onComplete?.Invoke(AdLoadResult.Ok(Network));
+            });
+        }
+
+        public void ShowMrec(Vector2 centerPixels)
+        {
+            if (_mrecUnitId == null) return;
+            var scale = Screen.dpi > 0 ? Screen.dpi / 160f : 1f;
+            var size = new Vector2(300f, 250f) * scale;
+            SimulatorAdOverlay.Instance.SetMrec(true, new Rect(centerPixels - size * 0.5f, size), RaiseClick);
+            Pay(AdFormat.Mrec, _mrecUnitId, AdsIds.PlacementMrec);
+        }
+
+        public void HideMrec() => SimulatorAdOverlay.Instance.SetMrec(false, default, null);
+
+        public void DestroyMrec()
+        {
+            _mrecUnitId = null;
+            _mrecLoading = null;
+            HideMrec();
+        }
+
+        private void RaiseClick()
+        {
+            KitLog.Info("Simulator: ad view clicked (the next resume will not show an app-open ad)");
+            AdViewClicked?.Invoke();
+        }
+
         public void OpenDebugger() => KitLog.Info("Simulator: no mediation debugger (this is the fake provider)");
 
         private void OnTick(float dt)
@@ -136,12 +182,12 @@ namespace NineDTech.AdsKit.Ads
         private void SyncBanner()
         {
             SimulatorAdOverlay.Instance.SetBanner(_bannerUnitId != null && _bannerVisible, BannerHeightPixels,
-                _bannerPosition, _bannerType == BannerType.Standard ? "standard" : "adaptive");
+                _bannerPosition, _bannerType == BannerType.Standard ? "standard" : "adaptive", RaiseClick);
         }
 
         private void Pay(AdFormat format, string adUnitId, string placement)
         {
-            var ecpm = Settings.fakeEcpmUsd * (format == AdFormat.Banner ? 0.05f : format == AdFormat.Rewarded ? 1.5f : 1f);
+            var ecpm = Settings.fakeEcpmUsd * (format == AdFormat.Banner || format == AdFormat.Mrec ? 0.05f : format == AdFormat.Rewarded ? 1.5f : 1f);
             RevenuePaid?.Invoke(new AdRevenueEvent
             {
                 Format = format,

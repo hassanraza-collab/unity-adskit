@@ -92,7 +92,8 @@ namespace NineDTech.AdsKit.Analytics
 
         public static AnalyticsEventBuilder Event(string name)
         {
-            var builder = Pool.Count > 0 ? Pool.Pop() : new AnalyticsEventBuilder();
+            // The pool is main-thread only; SDK callbacks on other threads get a fresh builder.
+            var builder = KitRunner.IsMainThread && Pool.Count > 0 ? Pool.Pop() : new AnalyticsEventBuilder();
             builder.Begin(name);
             return builder;
         }
@@ -124,6 +125,12 @@ namespace NineDTech.AdsKit.Analytics
 
         internal static void Dispatch(AnalyticsEventBuilder builder)
         {
+            // Hop first: enrichers (game common params) may use Unity APIs such as PlayerPrefs.
+            if (!KitRunner.IsMainThread)
+            {
+                KitRunner.RunOnMainThread(() => Dispatch(builder));
+                return;
+            }
             var name = builder.Name;
             if (!IsEventEnabled(name)) { Release(builder); return; }
 
@@ -149,12 +156,6 @@ namespace NineDTech.AdsKit.Analytics
 
             var parameters = builder.Params.ToArray();
             Release(builder);
-
-            if (!KitRunner.IsMainThread)
-            {
-                KitRunner.RunOnMainThread(() => Send(name, parameters));
-                return;
-            }
             Send(name, parameters);
         }
 

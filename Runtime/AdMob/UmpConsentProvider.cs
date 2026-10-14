@@ -10,7 +10,8 @@ namespace NineDTech.AdsKit.AdMob
     /// <summary>
     /// Google User Messaging Platform consent (GDPR/TCF). Runs before either mediation SDK initializes and is used
     /// for both A/B arms: MAX and the mediated networks read the TCF string UMP writes. The result is mapped from
-    /// TCF purpose 1 (store/access information on a device).
+    /// TCF purpose 1 (store/access information on a device). UMP calls back on the Android UI thread (it follows
+    /// RaiseAdEventsOnUnityMainThread, which AdsKit leaves off), so every callback hops to the Unity main thread.
     /// </summary>
     public sealed class UmpConsentProvider : IAdsConsentProvider
     {
@@ -33,7 +34,7 @@ namespace NineDTech.AdsKit.AdMob
                 };
             }
 
-            ConsentInformation.Update(request, updateError =>
+            ConsentInformation.Update(request, updateError => KitRunner.Dispatch(() =>
             {
                 if (updateError != null)
                 {
@@ -44,22 +45,22 @@ namespace NineDTech.AdsKit.AdMob
                 }
                 if (ConsentInformation.ConsentStatus == ConsentStatus.Required)
                     KitAnalytics.Event(Analytics.KitEvents.ConsentShown).Log();
-                ConsentForm.LoadAndShowConsentFormIfRequired(formError =>
+                ConsentForm.LoadAndShowConsentFormIfRequired(formError => KitRunner.Dispatch(() =>
                 {
                     if (formError != null) KitLog.Warn("UMP form error: " + formError.Message);
                     onComplete?.Invoke(Map());
-                });
-            });
+                }));
+            }));
         }
 
         public void ShowPrivacyOptions(Action onClosed)
         {
-            ConsentForm.ShowPrivacyOptionsForm(error =>
+            ConsentForm.ShowPrivacyOptionsForm(error => KitRunner.Dispatch(() =>
             {
                 if (error != null) KitLog.Warn("UMP privacy options: " + error.Message);
                 AdsConsent.Report(Map());
                 onClosed?.Invoke();
-            });
+            }));
         }
 
         private static AdsConsentStatus Map()

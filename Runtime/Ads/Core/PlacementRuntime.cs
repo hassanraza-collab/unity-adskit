@@ -12,7 +12,10 @@ namespace NineDTech.AdsKit.Ads
         // Interstitial / rewarded / app-open resume
         public string UnitKey;
         public float CooldownSec;
+        public bool Priority;
         public float MinBackgroundSec;
+        public float WelcomeBackMinSec;
+        public float TimeoutSec;
 
         // Banner
         public string StandardUnitKey;

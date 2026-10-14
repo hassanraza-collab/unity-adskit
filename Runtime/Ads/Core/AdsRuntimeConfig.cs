@@ -19,6 +19,7 @@ namespace NineDTech.AdsKit.Ads
         public PlacementRuntime Splash;
         public PlacementRuntime Banner;
         public PlacementRuntime AppOpenResume;
+        public PlacementRuntime Mrec;
 
         public readonly Dictionary<string, PlacementRuntime> Interstitials = new Dictionary<string, PlacementRuntime>();
         public readonly Dictionary<string, PlacementRuntime> Rewarded = new Dictionary<string, PlacementRuntime>();
@@ -105,7 +106,17 @@ namespace NineDTech.AdsKit.Ads
                 p.Id = AdsIds.PlacementAppOpenResume;
                 p.UnitKey = c.RegisterUnit(s.appOpenResume.adUnit);
                 p.MinBackgroundSec = s.appOpenResume.minBackgroundSec;
+                p.WelcomeBackMinSec = s.appOpenResume.welcomeBackMinSec;
+                p.TimeoutSec = s.appOpenResume.timeoutSec;
                 c.AppOpenResume = p;
+            }
+
+            if (s.mrec != null)
+            {
+                var p = Base(s.mrec);
+                p.Id = AdsIds.PlacementMrec;
+                p.UnitKey = c.RegisterUnit(s.mrec.adUnit);
+                c.Mrec = p;
             }
 
             foreach (var r in s.rewarded)
@@ -122,6 +133,7 @@ namespace NineDTech.AdsKit.Ads
                 var p = Base(i);
                 p.UnitKey = c.RegisterUnit(i.adUnit);
                 p.CooldownSec = i.cooldownSec;
+                p.Priority = i.priority;
                 c.Interstitials[p.Id] = p;
             }
 

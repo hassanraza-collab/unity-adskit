@@ -23,5 +23,14 @@ namespace NineDTech.AdsKit.Ads
 
         /// <summary>A rewarded ad could not be shown; tell the player (e.g. a "No ad available" toast).</summary>
         void OnRewardedUnavailable(string placementId);
+
+        /// <summary>
+        /// The player came back from the background and an app-open ad is loading: cover the screen with a
+        /// "Welcome back" panel (dimmed game behind, loading indicator) and block input. Optional (default: nothing).
+        /// </summary>
+        void ShowWelcomeBack() { }
+
+        /// <summary>Remove the "Welcome back" panel (the ad is about to show, failed or timed out).</summary>
+        void HideWelcomeBack() { }
     }
 }

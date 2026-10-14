@@ -8,7 +8,8 @@ namespace NineDTech.AdsKit.Firebase
     /// <summary>
     /// Google Consent Mode v2 for Firebase Analytics, driven by the AdsKit consent result (UMP / TCF purpose 1).
     /// Not required or granted: everything granted. Denied: ad storage, ad user data, ad personalization and
-    /// analytics storage denied (Firebase then sends cookieless pings only).
+    /// analytics storage denied (Firebase then sends cookieless pings only). Until a result is known everything stays
+    /// denied: the build writes default-denied manifest keys (Editor/AdsKitConsentDefaultsProcessor).
     /// </summary>
     public static class FirebaseConsentMode
     {

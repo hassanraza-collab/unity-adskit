@@ -34,7 +34,11 @@ description: Integrate the AdsKit Unity package (com.ninedtech.adskit; ads media
    - each placement wrapped so the flow continues in the callback;
    - rewarded with `Ads.NotifyRewardedOffer`;
    - the banner offset through `Ads.BannerHeightChanged`;
-   - `LevelAnalytics` calls and the `lvl` common parameter.
+   - `LevelAnalytics` calls and the `lvl` common parameter;
+   - a Welcome Back screen through the hooks' `ShowWelcomeBack` / `HideWelcomeBack` (the app-open ad on resume);
+   - `Ads.SuppressNextResume()` right before store, purchase, share or permission flows;
+   - `priority: true` on the win/fail and level-select interstitials;
+   - an exit panel (device Back) with `Ads.ShowMrec(anchor)` / `Ads.HideMrec()`, preloaded on home with `Ads.PreloadMrec()`.
 
 5. **Hard rules:**
    - Never edit the package from a game.

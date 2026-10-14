@@ -76,6 +76,7 @@ namespace NineDTech.AdsKit.Ads
         public SplashAdPlacement splash;
         public BannerPlacement banner;
         public AppOpenResumePlacement appOpenResume;
+        public MrecPlacement mrec;
         public List<RewardedPlacement> rewarded = new List<RewardedPlacement>();
         public List<InterstitialPlacement> interstitials = new List<InterstitialPlacement>();
 
