@@ -48,7 +48,6 @@ namespace NineDTech.AdsKit.Ads
         private const float PumpInterval = 0.25f;
         private const float LoadTimeoutSec = 60f;
         private const float OpenTimeoutSec = 6f;
-        private const float InitTimeoutSec = 30f;
         private const double NegativeInfinity = -1e9;
 
         private readonly AdsSettings _settings;
@@ -289,21 +288,42 @@ namespace NineDTech.AdsKit.Ads
                 KitRunner.After(30f, InitProvider);
             }
 
-            // Some SDKs never call back when misconfigured (e.g. MAX without an SDK key).
-            KitRunner.After(InitTimeoutSec, () => Fail("did not finish initializing within " + InitTimeoutSec + "s"));
-            _provider.Initialize(args, ok => KitRunner.Dispatch(() =>
+            void BecomeReady(string how)
             {
                 if (State != InitState.InitializingSdk || attempt != _initAttempt) return;
+                State = InitState.Ready;
+                _banner = new BannerController(this);
+                _pumpNow = true;
+                KitLog.Info(MediationId + " ready (" + how + ") in " + Mathf.RoundToInt((float)((KitRunner.Now - started) * 1000)) + " ms");
+                Ready?.Invoke();
+            }
+
+            // AdMob only calls back once EVERY mediation adapter started or timed out (~30 s for a slow one), which
+            // would cost the splash ad and early placements. After sdk_init_max_wait_sec, start requesting anyway:
+            // adapters that are still starting just miss the first auctions. A late callback is then a no-op.
+            var maxWait = Mathf.Max(0f, _config.Loading.sdkInitMaxWaitSec);
+            if (maxWait > 0f)
+                KitRunner.After(maxWait, () =>
+                {
+                    if (State == InitState.InitializingSdk && attempt == _initAttempt)
+                        BecomeReady("not all adapters finished after " + maxWait + "s; loading anyway");
+                });
+
+            _provider.Initialize(args, ok => KitRunner.Dispatch(() =>
+            {
+                if (attempt != _initAttempt) return;
+                if (State == InitState.Ready)
+                {
+                    KitLog.Info(MediationId + " initialization finished after " + Mathf.RoundToInt((float)(KitRunner.Now - started)) + " s");
+                    return;
+                }
+                if (State != InitState.InitializingSdk) return;
                 if (!ok)
                 {
                     Fail("failed to initialize");
                     return;
                 }
-                State = InitState.Ready;
-                _banner = new BannerController(this);
-                _pumpNow = true;
-                KitLog.Info(MediationId + " ready in " + Mathf.RoundToInt((float)((KitRunner.Now - started) * 1000)) + " ms");
-                Ready?.Invoke();
+                BecomeReady("callback");
             }));
         }
 
@@ -586,7 +606,8 @@ namespace NineDTech.AdsKit.Ads
 
         private void AddDesired(string key)
         {
-            if (string.IsNullOrEmpty(key) || !_desiredSet.Add(key)) return;
+            var id = SlotId(key);
+            if (string.IsNullOrEmpty(id) || !_desiredSet.Add(id)) return; // _desiredSet holds unit ids
             _desired.Add(key);
         }
 
@@ -614,7 +635,7 @@ namespace NineDTech.AdsKit.Ads
                 if (s.State == AdSlotState.Ready || s.State == AdSlotState.Loading)
                 {
                     inMemory++;
-                    if (s.State == AdSlotState.Ready && !_desiredSet.Contains(s.Key) && (evictable == null || s.LoadedAt < evictable.LoadedAt))
+                    if (s.State == AdSlotState.Ready && !_desiredSet.Contains(s.UnitId) && (evictable == null || s.LoadedAt < evictable.LoadedAt))
                         evictable = s;
                 }
             }
@@ -637,7 +658,7 @@ namespace NineDTech.AdsKit.Ads
                     : _config.Loading.admobInterRewardedRefreshMin;
                 if (now - slot.LoadedAt < maxMinutes * 60.0) continue;
                 // Desired slots reload on the next pump; others stay idle (refresh_only_when_needed).
-                if (_config.Loading.refreshOnlyWhenNeeded && !_desiredSet.Contains(slot.Key))
+                if (_config.Loading.refreshOnlyWhenNeeded && !_desiredSet.Contains(slot.UnitId))
                     KitLog.Info(slot.Key + " expired; not needed now, not reloading");
                 else
                     KitLog.Info(slot.Key + " about to expire; reloading");
@@ -645,25 +666,25 @@ namespace NineDTech.AdsKit.Ads
             }
         }
 
-        private AdSlot GetSlot(string key) => key != null && _slots.TryGetValue(key, out var slot) ? slot : null;
+        // Slots are keyed by the SDK ad unit id, not the AdsKit unit key: SDKs hold one ad per unit id, so placements
+        // configured with the same id must share one cached ad (Google's test ids, or a deliberately shared unit).
+        // A unit id changed remotely simply maps to a new slot; the old one is never desired again and gets evicted.
+        private string SlotId(string key) => key != null ? _config.GetUnitId(MediationId, key) : null;
+
+        private AdSlot GetSlot(string key)
+        {
+            var id = SlotId(key);
+            return !string.IsNullOrEmpty(id) && _slots.TryGetValue(id, out var slot) ? slot : null;
+        }
 
         private AdSlot GetOrCreateSlot(string key)
         {
-            var unitId = _config.GetUnitId(MediationId, key);
+            var unitId = SlotId(key);
             if (string.IsNullOrEmpty(unitId)) return null;
-            if (!_slots.TryGetValue(key, out var slot))
-            {
-                if (!_config.UnitFormats.TryGetValue(key, out var format)) return null;
-                slot = new AdSlot { Key = key, Format = format, UnitId = unitId };
-                _slots[key] = slot;
-            }
-            else if (slot.UnitId != unitId && slot.State != AdSlotState.Showing)
-            {
-                KitLog.Info(key + " ad unit id changed remotely");
-                Discard(slot);
-                slot.UnitId = unitId;
-                ResetRetry(slot);
-            }
+            if (_slots.TryGetValue(unitId, out var slot)) return slot;
+            if (!_config.UnitFormats.TryGetValue(key, out var format)) return null;
+            slot = new AdSlot { Key = key, Format = format, UnitId = unitId };
+            _slots[unitId] = slot;
             return slot;
         }
 
@@ -771,7 +792,7 @@ namespace NineDTech.AdsKit.Ads
             KitLog.Warn("Low memory: shrinking the ad cache");
             BuildDesired();
             foreach (var slot in _slots.Values)
-                if (slot.State == AdSlotState.Ready && slot.Format == AdFormat.Interstitial && !_desiredSet.Contains(slot.Key))
+                if (slot.State == AdSlotState.Ready && slot.Format == AdFormat.Interstitial && !_desiredSet.Contains(slot.UnitId))
                     Discard(slot);
         }
 
@@ -793,11 +814,12 @@ namespace NineDTech.AdsKit.Ads
         private void OnRevenuePaid(AdRevenueEvent e)
         {
             var unitKey = e.AdUnitId;
-            foreach (var slot in _slots.Values)
-                if (slot.UnitId == e.AdUnitId) { unitKey = slot.Key; break; }
-            var placement = !string.IsNullOrEmpty(e.Placement) ? e.Placement
-                : _active != null ? _active.PlacementId
-                : e.Format == AdFormat.Banner ? AdsIds.PlacementBanner : "";
+            foreach (var key in _config.UnitFormats.Keys)
+                if (_config.GetUnitId(MediationId, key) == e.AdUnitId && _config.UnitFormats[key] == e.Format) { unitKey = key; break; }
+            // Banner refreshes keep paying while a full-screen ad is open: never credit them to that placement.
+            var placement = e.Format == AdFormat.Banner ? AdsIds.PlacementBanner
+                : !string.IsNullOrEmpty(e.Placement) ? e.Placement
+                : _active != null ? _active.PlacementId : "";
             var currency = string.IsNullOrEmpty(e.Currency) ? "USD" : e.Currency;
             var format = AdsAnalyticsEvents.FormatName(e.Format);
             var platform = AdsAnalyticsEvents.PlatformName(MediationId);
@@ -906,7 +928,7 @@ namespace NineDTech.AdsKit.Ads
             }
 
             AdsAnalyticsEvents.Begin(AdsAnalyticsEvents.Close, s.PlacementId, slot.Format)
-                .Add("view_sec", Math.Round(s.OpenedAt > 0 ? now - s.OpenedAt : 0, 1))
+                .Add("view_sec", Math.Round(s.ViewSeconds, 1))
                 .Log();
 
             if (s.Kind == ShowKind.Rewarded && s.RewardEarned)
@@ -955,7 +977,14 @@ namespace NineDTech.AdsKit.Ads
             public readonly Action OnReward;
             public readonly Action<AdShowResult> OnDone;
             public bool RewardEarned;
-            public double OpenedAt;
+
+            // Unity is paused while a full-screen ad covers it, so the SDK callbacks are only processed after the
+            // ad closed. Timestamp them when the SDK fires them (any thread) to measure the real view time.
+            private static readonly System.Diagnostics.Stopwatch SdkClock = System.Diagnostics.Stopwatch.StartNew();
+            private double _openedAtSdk = -1;
+            private double _closedAtSdk = -1;
+
+            public double ViewSeconds => _openedAtSdk >= 0 && _closedAtSdk >= _openedAtSdk ? _closedAtSdk - _openedAtSdk : 0;
 
             public FullscreenSession(AdsService service, AdSlot slot, string placementId, ShowKind kind, Action onReward, Action<AdShowResult> onDone)
             {
@@ -967,13 +996,17 @@ namespace NineDTech.AdsKit.Ads
                 OnDone = onDone;
             }
 
-            public void OnOpened(string network) => KitRunner.Dispatch(() =>
+            public void OnOpened(string network)
             {
-                if (_opened || _finished) return;
-                _opened = true;
-                OpenedAt = KitRunner.Now;
-                _service.OnFullscreenOpened(this, network);
-            });
+                var at = SdkClock.Elapsed.TotalSeconds;
+                KitRunner.Dispatch(() =>
+                {
+                    if (_opened || _finished) return;
+                    _opened = true;
+                    _openedAtSdk = at;
+                    _service.OnFullscreenOpened(this, network);
+                });
+            }
 
             public void OnFailedToShow(string error) => KitRunner.Dispatch(() => Finish(false, error));
 
@@ -982,7 +1015,15 @@ namespace NineDTech.AdsKit.Ads
 
             public void OnRewardEarned() => KitRunner.Dispatch(() => RewardEarned = true);
 
-            public void OnClosed() => KitRunner.Dispatch(() => Finish(true, null));
+            public void OnClosed()
+            {
+                var at = SdkClock.Elapsed.TotalSeconds;
+                KitRunner.Dispatch(() =>
+                {
+                    if (_closedAtSdk < 0) _closedAtSdk = at;
+                    Finish(true, null);
+                });
+            }
 
             public void CheckOpenTimeout()
             {

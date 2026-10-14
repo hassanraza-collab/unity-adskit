@@ -2,6 +2,15 @@
 
 All notable changes to this package are documented here. Versions follow [Semantic Versioning](https://semver.org).
 
+## [0.4.4] - 2026-10-14
+### Fixed (found in the first device test, BlueStacks + real AdMob test ads)
+- SDK init: AdMob only calls back after every mediation adapter started or timed out (~30 s), which cost the splash ad. New `loading.sdk_init_max_wait_sec` (default 5): ads start loading after that even if adapters are still starting; a late callback is a no-op. The old 30 s timeout no longer discards a slow-but-valid init.
+- Placements sharing one ad unit id now share one cached ad (slots keyed by unit id). Before, a shown ad left the other placements wrongly "ready".
+- `view_sec` measured from SDK callback times (Unity is paused under full-screen ads, so both callbacks used to arrive in the same frame).
+- Banner revenue is always attributed to the `banner` placement, also while a full-screen ad is open; `ad_unit_name` resolves the readable unit key for banners.
+### Changed
+- `max_cached_interstitials` default 2 -> 3 so every gameplay interstitial placement is preloaded.
+
 ## [0.4.3] - 2026-10-14
 ### Fixed
 - IL2CPP builds stripped the Firebase/MAX/AdMob provider assemblies (nothing references them; they self-register), so device builds fell back to the simulator. `AdsKitLinkerProcessor` now generates a link.xml preserving every installed AdsKit assembly (Unity ignores link.xml inside packages).

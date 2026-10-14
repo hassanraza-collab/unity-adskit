@@ -29,6 +29,7 @@ namespace NineDTech.AdsKit.Ads
             f.Read("max_interstitials_per_session", ref c.Frequency.maxInterstitialsPerSession);
 
             var l = root.GetObject("loading");
+            l.Read("sdk_init_max_wait_sec", ref c.Loading.sdkInitMaxWaitSec);
             l.Read("max_concurrent_loads", ref c.Loading.maxConcurrentLoads);
             l.Read("load_stagger_sec", ref c.Loading.loadStaggerSec);
             l.Read("retry_max_backoff_sec", ref c.Loading.retryMaxBackoffSec);

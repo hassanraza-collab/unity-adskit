@@ -179,6 +179,7 @@ namespace NineDTech.AdsKit.Editor
             f.Read("max_interstitials_per_session", ref s.frequency.maxInterstitialsPerSession);
 
             var l = root.GetObject("loading");
+            l.Read("sdk_init_max_wait_sec", ref s.loading.sdkInitMaxWaitSec);
             l.Read("max_concurrent_loads", ref s.loading.maxConcurrentLoads);
             l.Read("load_stagger_sec", ref s.loading.loadStaggerSec);
             l.Read("retry_max_backoff_sec", ref s.loading.retryMaxBackoffSec);
@@ -278,6 +279,7 @@ namespace NineDTech.AdsKit.Editor
                 },
                 ["loading"] = new Dictionary<string, object>
                 {
+                    ["sdk_init_max_wait_sec"] = s.loading.sdkInitMaxWaitSec,
                     ["max_concurrent_loads"] = s.loading.maxConcurrentLoads,
                     ["load_stagger_sec"] = s.loading.loadStaggerSec,
                     ["retry_max_backoff_sec"] = s.loading.retryMaxBackoffSec,

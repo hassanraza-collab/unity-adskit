@@ -36,6 +36,9 @@ namespace NineDTech.AdsKit.Ads
     [Serializable]
     public class LoadingSettings
     {
+        [Tooltip("Start requesting ads after this many seconds even if the SDK has not reported every mediation adapter as started (AdMob waits for all of them, up to ~30 s). 0 = always wait.")]
+        [Min(0)] public float sdkInitMaxWaitSec = 5f;
+
         [Tooltip("Ad requests in flight at the same time.")]
         [Min(1)] public int maxConcurrentLoads = 1;
 
@@ -49,7 +52,7 @@ namespace NineDTech.AdsKit.Ads
         [Min(1)] public int retryMaxAttempts = 6;
 
         [Tooltip("Interstitials kept loaded for the current context (one extra from the previous context may be kept).")]
-        [Min(1)] public int maxCachedInterstitials = 2;
+        [Min(1)] public int maxCachedInterstitials = 3;
 
         [Tooltip("Devices with less RAM (MB) use the low-RAM cache size.")]
         public int lowRamThresholdMb = 3072;
