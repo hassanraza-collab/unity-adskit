@@ -168,14 +168,14 @@ namespace NineDTech.AdsKit.AdMob
                 var cb = _pendingBanner;
                 _pendingBanner = null;
                 cb(AdLoadResult.Ok(Network(banner.GetResponseInfo())));
-            }));
+            });
             banner.OnBannerAdLoadFailed += error => KitRunner.Dispatch(() =>
             {
                 if (_banner != banner || _pendingBanner == null) return; // refresh failures: Google retries on its own
                 var cb = _pendingBanner;
                 DestroyBanner();
                 cb(AdLoadResult.Fail(Describe(error)));
-            }));
+            });
             banner.OnAdPaid += v => Pay(AdFormat.Banner, adUnitId, v, banner.GetResponseInfo());
             banner.OnAdClicked += () => KitRunner.Dispatch(() => AdViewClicked?.Invoke());
             banner.Hide(); // AdsKit decides when it is visible
@@ -217,14 +217,14 @@ namespace NineDTech.AdsKit.AdMob
                 var cb = _pendingMrec;
                 _pendingMrec = null;
                 cb(AdLoadResult.Ok(Network(mrec.GetResponseInfo())));
-            }));
+            });
             mrec.OnBannerAdLoadFailed += error => KitRunner.Dispatch(() =>
             {
                 if (_mrec != mrec || _pendingMrec == null) return;
                 var cb = _pendingMrec;
                 DestroyMrec();
                 cb(AdLoadResult.Fail(Describe(error)));
-            }));
+            });
             mrec.OnAdPaid += v => Pay(AdFormat.Mrec, adUnitId, v, mrec.GetResponseInfo());
             mrec.OnAdClicked += () => KitRunner.Dispatch(() => AdViewClicked?.Invoke());
             mrec.Hide(); // AdsKit decides when it is visible
