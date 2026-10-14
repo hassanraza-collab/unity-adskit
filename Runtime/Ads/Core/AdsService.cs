@@ -48,6 +48,7 @@ namespace NineDTech.AdsKit.Ads
         private const float PumpInterval = 0.25f;
         private const float LoadTimeoutSec = 60f;
         private const float OpenTimeoutSec = 6f;
+        private const float InitTimeoutSec = 30f;
         private const double NegativeInfinity = -1e9;
 
         private readonly AdsSettings _settings;
@@ -80,6 +81,7 @@ namespace NineDTech.AdsKit.Ads
         private double _lastFullscreenClose = NegativeInfinity;
         private int _interstitialsThisSession;
 
+        private int _initAttempt;
         private double _revenueTotal;
         private int _revenueTier;
 
@@ -196,6 +198,15 @@ namespace NineDTech.AdsKit.Ads
             }
             _provider.RevenuePaid += e => KitRunner.Dispatch(() => OnRevenuePaid(e));
 
+            var debug = Debug.isDebugBuild;
+            AdsConsent.DebugForceEea = debug && _settings.consentDebugForceEea;
+            AdsConsent.DebugTestDeviceHashedIds.Clear();
+            if (debug) AdsConsent.DebugTestDeviceHashedIds.AddRange(_settings.consentTestDeviceHashedIds);
+            GatherConsent();
+        }
+
+        private void GatherConsent()
+        {
             State = InitState.GatheringConsent;
             var consent = AdsConsent.Provider;
             KitLog.Info("Gathering consent (" + consent.Name + ")");
@@ -205,9 +216,19 @@ namespace NineDTech.AdsKit.Ads
                 var name = status.ToString().ToLowerInvariant();
                 KitAnalytics.SetUserProperty("consent", name);
                 KitAnalytics.Event(KitEvents.ConsentResult).Add("status", name).Log();
+                if (!consent.CanRequestAds)
+                {
+                    // Google: never request ads before consent info is known. Try again later (usually offline).
+                    KitLog.Warn("Consent not resolved yet; ads paused, retrying in 60s");
+                    KitRunner.After(60f, GatherConsent);
+                    return;
+                }
                 InitProvider();
             }));
         }
+
+        /// <summary>Show the GDPR privacy options form (add a button in settings when <see cref="PrivacyOptionsRequired"/>).</summary>
+        public bool PrivacyOptionsRequired => AdsConsent.Provider.PrivacyOptionsRequired;
 
         private string ResolveMediation()
         {
@@ -237,22 +258,36 @@ namespace NineDTech.AdsKit.Ads
         private void InitProvider()
         {
             State = InitState.InitializingSdk;
+            var attempt = ++_initAttempt;
             var started = KitRunner.Now;
+            var testMode = Debug.isDebugBuild && _settings.testModeInDevelopmentBuilds;
             var args = new MediationInitArgs
             {
                 AdUnitIds = _config.GetAllUnitIds(MediationId),
-                TestMode = Debug.isDebugBuild && _settings.testModeInDevelopmentBuilds,
+                TestMode = testMode,
+                TestDeviceIds = !testMode ? new List<string>()
+                    : MediationId == AdsIds.Max ? _settings.maxTestDeviceAdvertisingIds : _settings.admobTestDeviceIds,
                 VerboseLogs = _settings.verboseLogs,
                 Consent = AdsConsent.Status
             };
             KitLog.Info("Initializing " + MediationId + " with " + args.AdUnitIds.Count + " ad units");
+
+            void Fail(string why)
+            {
+                if (State != InitState.InitializingSdk || attempt != _initAttempt) return;
+                _initAttempt++;
+                KitLog.Error(MediationId + " " + why + "; retrying in 30s");
+                KitRunner.After(30f, InitProvider);
+            }
+
+            // Some SDKs never call back when misconfigured (e.g. MAX without an SDK key).
+            KitRunner.After(InitTimeoutSec, () => Fail("did not finish initializing within " + InitTimeoutSec + "s"));
             _provider.Initialize(args, ok => KitRunner.Dispatch(() =>
             {
-                if (State != InitState.InitializingSdk) return;
+                if (State != InitState.InitializingSdk || attempt != _initAttempt) return;
                 if (!ok)
                 {
-                    KitLog.Error(MediationId + " failed to initialize; retrying in 30s");
-                    KitRunner.After(30f, InitProvider);
+                    Fail("failed to initialize");
                     return;
                 }
                 State = InitState.Ready;

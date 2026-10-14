@@ -106,6 +106,9 @@ The banner shows automatically in every context except splash, once it passes it
 - **Move bottom UI up** by `Ads.BannerHeightPixels`, using the `Ads.BannerHeightChanged` event (screen pixels; 0 when hidden). Convert to canvas units with `pixels / canvas.scaleFactor`.
 - **Hide it behind full-screen menus** with `Ads.SetBannerSuppressed(true)`, if needed.
 
+## 7b. Privacy (GDPR)
+In the game's settings screen add a **Privacy options** button, visible only when `Ads.PrivacyOptionsRequired` is true, calling `Ads.ShowPrivacyOptions()`. Consent itself (UMP form) runs automatically inside `Ads.Initialize` before any SDK starts; do not add another CMP.
+
 ## 8. Analytics
 - **Level progression:** call `LevelAnalytics` (`LevelStart`, `LevelEnd`, `LevelRestart`, `LevelQuit`) from the game's level events. Milestone events are automatic.
 - **Other events:** use `Analytics.Event("name").Add(...).Log()`. Follow `Documentation~/ANALYTICS_EVENTS.md` for names and parameters.

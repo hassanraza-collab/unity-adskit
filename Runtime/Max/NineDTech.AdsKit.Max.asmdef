@@ -1,0 +1,20 @@
+{
+    "name": "NineDTech.AdsKit.Max",
+    "rootNamespace": "NineDTech.AdsKit.Max",
+    "references": [
+        "NineDTech.AdsKit.Core",
+        "NineDTech.AdsKit.Ads",
+        "MaxSdk.Scripts"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "ADSKIT_MAX"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

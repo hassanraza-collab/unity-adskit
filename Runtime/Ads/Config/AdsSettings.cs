@@ -45,6 +45,19 @@ namespace NineDTech.AdsKit.Ads
         [Tooltip("Pass test-mode flags to the SDKs (development builds only).")]
         public bool testModeInDevelopmentBuilds = true;
 
+        [Tooltip("Development builds: AdMob test device hashed ids (logcat: 'Use RequestConfiguration...setTestDeviceIds').")]
+        public List<string> admobTestDeviceIds = new List<string>();
+
+        [Tooltip("Development builds: MAX test devices (Google advertising ids).")]
+        public List<string> maxTestDeviceAdvertisingIds = new List<string>();
+
+        [Header("Consent (Google UMP)")]
+        [Tooltip("Development builds: force the EEA consent form on every device for testing.")]
+        public bool consentDebugForceEea;
+
+        [Tooltip("Development builds: UMP test device hashed ids (logcat: 'Use new ConsentDebugSettings.Builder().addTestDeviceHashedId').")]
+        public List<string> consentTestDeviceHashedIds = new List<string>();
+
         [Header("Frequency / sessions / loading")]
         public SessionSettings session = new SessionSettings();
         public FrequencySettings frequency = new FrequencySettings();

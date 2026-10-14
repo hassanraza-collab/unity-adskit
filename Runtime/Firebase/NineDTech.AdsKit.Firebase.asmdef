@@ -2,7 +2,8 @@
     "name": "NineDTech.AdsKit.Firebase",
     "rootNamespace": "NineDTech.AdsKit.Firebase",
     "references": [
-        "NineDTech.AdsKit.Core"
+        "NineDTech.AdsKit.Core",
+        "NineDTech.AdsKit.Ads"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

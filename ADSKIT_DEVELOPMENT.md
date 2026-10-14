@@ -42,7 +42,7 @@ An exportable, ScriptableObject-driven ads and analytics package:
 |---|---|---|
 | 1 | Core, ScriptableObjects, simulator, analytics core, Editor tools, docs, Claude skill | **done 2026-10-13** (compile-checked against Unity 6000.3 DLLs; play-test in the game pending) |
 | 2 | Firebase provider assembly: Remote Config source, Analytics sink, Crashlytics keys | **done 2026-10-14** (compile-checked against Firebase 13.17.0; device test pending) |
-| 3 | MAX provider, then AdMob provider; UMP consent provider | todo |
+| 3 | MAX provider, then AdMob provider; UMP consent provider | **done 2026-10-14** (compile-checked vs MAX 8.6.6 / GMA 11.5.0 / UMP; device test pending) |
 | 4 | Phase-1 adapters, version lock table, device QA matrix | todo |
 | 5 | Game integration (Rotate Rings): splash, placements, banner safe area, analytics glue | todo |
 | 6 | A/B experiment launch; phase-2 adapters | todo |
@@ -67,6 +67,17 @@ Runtime/Firebase  NineDTech.AdsKit.Firebase (defineConstraint ADSKIT_FIREBASE)
   FirebaseBootstrap  registers source+sink at AfterAssembliesLoaded, CheckAndFixDependencies, Crashlytics fatal reporting
   FirebaseRemoteConfigSource  fetch+activate (dev: interval 0, release: 1h), real-time updates -> Activated
   FirebaseAnalyticsSink  LogEvent/SetUserProperty; user properties mirrored to Crashlytics custom keys
+Runtime/Max    NineDTech.AdsKit.Max (ADSKIT_MAX, refs MaxSdk.Scripts)
+  MaxMediationProvider  global MAX callbacks routed per ad unit; selective init with all unit ids; consent -> SetHasUserConsent;
+                        banner via CreateBanner(AdViewConfiguration{IsAdaptive}); height = GetAdaptiveBannerHeight/50dp(90 tablet) * density;
+                        ManagesExpiry=true; logs ad_impression manually (AutoLogsFirebaseImpressions=false)
+Runtime/AdMob  NineDTech.AdsKit.AdMob (ADSKIT_ADMOB)
+  AdMobMediationProvider  per-unit InterstitialAd/RewardedAd/AppOpenAd; events wired per show; OnAdPaid micros -> USD;
+                          banner AdSize.Banner / anchored adaptive FullWidth, hidden until AdsKit shows it; Ad Inspector;
+                          never RaiseAdEventsOnUnityMainThread; AutoLogsFirebaseImpressions=true
+  UmpConsentProvider     registered as AdsConsent.Provider (both arms); Update -> LoadAndShowConsentFormIfRequired;
+                          status from TCF purpose 1 (TcfData reads default SharedPreferences via JNI); privacy options form
+Runtime/Firebase FirebaseConsentMode  AdsConsent.StatusChanged -> FirebaseAnalytics.SetConsent (Consent Mode v2)
 Editor         Tools/AdsKit: Import/Export ads_config JSON, Validate, Reset local state, Refresh SDK Defines
   AdsKitSdkDefines   [InitializeOnLoad] detects SDK assemblies -> ADSKIT_FIREBASE / _CRASHLYTICS / ADSKIT_MAX / ADSKIT_ADMOB (Android+Standalone)
 ```
@@ -100,8 +111,8 @@ Every show callback fires exactly once. A 6 s open watchdog and a 60 s load watc
 |---|---|---|
 | Firebase Unity SDK (App, Analytics, Remote Config, Crashlytics) | 13.17.0 | imported as .unitypackage into Assets/Firebase (Rotate Rings) |
 | External Dependency Manager (EDM4U) | 1.2.189 | bundled with Firebase; keep this single copy |
-| AppLovin MAX Unity plugin | TBD | |
-| Google Mobile Ads Unity plugin | TBD | classic SDK, not Next-Gen |
+| AppLovin MAX Unity plugin | 8.6.6 (applovin-sdk 13.6.4) | .unitypackage in Assets/MaxSdk; no adapters yet; SDK key pending |
+| Google Mobile Ads Unity plugin | 11.5.0 (play-services-ads 25.4.0, UMP 4.0.0) | classic SDK, not Next-Gen; Android App ID = Google TEST id until the AdMob account exists |
 | Adapters (MAX / GMA) per network | TBD | must resolve to the same network SDK version |
 
 ## Known gaps / TODO
@@ -110,6 +121,7 @@ Every show callback fires exactly once. A 6 s open watchdog and a 60 s load watc
 - **Firebase A/B test:** confirm whether "Estimated ad revenue" counts MAX `ad_impression`. Otherwise compare in BigQuery.
 
 ## Changelog
+- **0.4.0 (2026-10-14), phase 3:** MAX + AdMob providers, UMP consent provider (TCF purpose 1 mapping), Firebase Consent Mode v2, consent gate (no ad requests until UMP CanRequestAds), 30s SDK init timeout with retry, test-device ids + consent debug settings in AdsSettings, Ads.PrivacyOptionsRequired/ShowPrivacyOptions.
 - **0.3.0 (2026-10-14), phase 2:** Firebase provider assembly (Remote Config source with real-time updates, Analytics sink, Crashlytics custom keys); SDK define auto-detection; Editor test JSON now overrides Firebase too. TODO phase 3: Analytics consent mode (SetConsent) from UMP.
 - **0.2.0 (2026-10-13), phase 1:**
   - Runtime: core runtime, analytics core, ads service with predictive cache, simulator, debug HUD.

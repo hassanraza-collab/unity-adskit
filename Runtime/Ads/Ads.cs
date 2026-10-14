@@ -95,6 +95,12 @@ namespace NineDTech.AdsKit.Ads
         /// <summary>Hide the banner temporarily (it stays loaded), e.g. behind a full-screen menu.</summary>
         public static void SetBannerSuppressed(bool suppressed) => Service?.SetBannerSuppressed(suppressed);
 
+        /// <summary>GDPR: show a "Privacy options" button in settings when true.</summary>
+        public static bool PrivacyOptionsRequired => AdsConsent.Provider.PrivacyOptionsRequired;
+
+        /// <summary>Open the consent privacy options form (settings button).</summary>
+        public static void ShowPrivacyOptions(Action onClosed = null) => AdsConsent.ShowPrivacyOptions(onClosed);
+
         /// <summary>Open MAX Mediation Debugger / AdMob Ad Inspector.</summary>
         public static void OpenDebugger() => Service?.OpenDebugger();
     }

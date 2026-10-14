@@ -8,6 +8,8 @@ namespace NineDTech.AdsKit.Ads
         /// <summary>Every ad unit id this app may request (MAX selective init).</summary>
         public IReadOnlyList<string> AdUnitIds;
         public bool TestMode;
+        /// <summary>Test devices for this provider (AdMob: hashed ids from logcat; MAX: advertising ids).</summary>
+        public IReadOnlyList<string> TestDeviceIds;
         public bool VerboseLogs;
         public AdsConsentStatus Consent;
     }

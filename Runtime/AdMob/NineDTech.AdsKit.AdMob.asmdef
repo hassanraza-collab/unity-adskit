@@ -1,0 +1,19 @@
+{
+    "name": "NineDTech.AdsKit.AdMob",
+    "rootNamespace": "NineDTech.AdsKit.AdMob",
+    "references": [
+        "NineDTech.AdsKit.Core",
+        "NineDTech.AdsKit.Ads"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "ADSKIT_ADMOB"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

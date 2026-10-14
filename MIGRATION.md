@@ -2,6 +2,10 @@
 
 Steps needed in a game when updating AdsKit across versions. Breaking Remote Config schema changes ship under a new parameter name.
 
+## 0.3.0 -> 0.4.0
+- If the game has a settings screen, add a "Privacy options" button shown only when `Ads.PrivacyOptionsRequired` is true; it calls `Ads.ShowPrivacyOptions()` (GDPR requirement).
+- Optional: fill test device ids / consent debug fields in AdsSettings for device testing.
+
 ## 0.2.0 -> 0.3.0
 No code changes. If Firebase is installed, open the editor once so `ADSKIT_FIREBASE` defines are added (or run Tools/AdsKit/Refresh SDK Defines).
 
