@@ -129,9 +129,12 @@ namespace NineDTech.AdsKit.Ads
             KitAnalytics.AddCommonParams(AddMediationParam);
 
 #if UNITY_EDITOR
-            if (_settings.editorRemoteJson != null && RemoteConfigService.Local != null)
+            if (_settings.editorRemoteJson != null && RemoteConfigService.State == RemoteFetchState.NotStarted)
             {
-                RemoteConfigService.Local.Set(_settings.remoteConfigKey, _settings.editorRemoteJson.text);
+                // An Editor test payload wins over any backend (Firebase) for this play session.
+                var local = new LocalRemoteConfigSource();
+                local.Set(_settings.remoteConfigKey, _settings.editorRemoteJson.text);
+                RemoteConfigService.OverrideSource(local);
                 KitLog.Info("Editor: using " + _settings.editorRemoteJson.name + " as remote " + _settings.remoteConfigKey);
             }
 #endif

@@ -41,7 +41,7 @@ An exportable, ScriptableObject-driven ads and analytics package:
 | # | Phase | Status |
 |---|---|---|
 | 1 | Core, ScriptableObjects, simulator, analytics core, Editor tools, docs, Claude skill | **done 2026-10-13** (compile-checked against Unity 6000.3 DLLs; play-test in the game pending) |
-| 2 | Firebase provider assembly: Remote Config source, Analytics sink, Crashlytics keys | todo |
+| 2 | Firebase provider assembly: Remote Config source, Analytics sink, Crashlytics keys | **done 2026-10-14** (compile-checked against Firebase 13.17.0; device test pending) |
 | 3 | MAX provider, then AdMob provider; UMP consent provider | todo |
 | 4 | Phase-1 adapters, version lock table, device QA matrix | todo |
 | 5 | Game integration (Rotate Rings): splash, placements, banner safe area, analytics glue | todo |
@@ -63,7 +63,12 @@ Runtime/Ads    NineDTech.AdsKit.Ads
   Providers/         IMediationProvider, MediationProviderRegistry, AdsConsent
   Simulator/         SimulatorMediationProvider, SimulatorAdOverlay (IMGUI), AdsDebugHud
   Ads.cs             static facade
-Editor         Tools/AdsKit: Import/Export ads_config JSON, Validate, Reset local state
+Runtime/Firebase  NineDTech.AdsKit.Firebase (defineConstraint ADSKIT_FIREBASE)
+  FirebaseBootstrap  registers source+sink at AfterAssembliesLoaded, CheckAndFixDependencies, Crashlytics fatal reporting
+  FirebaseRemoteConfigSource  fetch+activate (dev: interval 0, release: 1h), real-time updates -> Activated
+  FirebaseAnalyticsSink  LogEvent/SetUserProperty; user properties mirrored to Crashlytics custom keys
+Editor         Tools/AdsKit: Import/Export ads_config JSON, Validate, Reset local state, Refresh SDK Defines
+  AdsKitSdkDefines   [InitializeOnLoad] detects SDK assemblies -> ADSKIT_FIREBASE / _CRASHLYTICS / ADSKIT_MAX / ADSKIT_ADMOB (Android+Standalone)
 ```
 
 ### Load scheduler (AdsService.Pump, every 0.25 s)
@@ -93,7 +98,8 @@ Every show callback fires exactly once. A 6 s open watchdog and a 60 s load watc
 ## Version lock table (phase 4)
 | Component | Version | Notes |
 |---|---|---|
-| Firebase Unity SDK | TBD | |
+| Firebase Unity SDK (App, Analytics, Remote Config, Crashlytics) | 13.17.0 | imported as .unitypackage into Assets/Firebase (Rotate Rings) |
+| External Dependency Manager (EDM4U) | 1.2.189 | bundled with Firebase; keep this single copy |
 | AppLovin MAX Unity plugin | TBD | |
 | Google Mobile Ads Unity plugin | TBD | classic SDK, not Next-Gen |
 | Adapters (MAX / GMA) per network | TBD | must resolve to the same network SDK version |
@@ -104,6 +110,7 @@ Every show callback fires exactly once. A 6 s open watchdog and a 60 s load watc
 - **Firebase A/B test:** confirm whether "Estimated ad revenue" counts MAX `ad_impression`. Otherwise compare in BigQuery.
 
 ## Changelog
+- **0.3.0 (2026-10-14), phase 2:** Firebase provider assembly (Remote Config source with real-time updates, Analytics sink, Crashlytics custom keys); SDK define auto-detection; Editor test JSON now overrides Firebase too. TODO phase 3: Analytics consent mode (SetConsent) from UMP.
 - **0.2.0 (2026-10-13), phase 1:**
   - Runtime: core runtime, analytics core, ads service with predictive cache, simulator, debug HUD.
   - Editor: JSON import/export, validator.

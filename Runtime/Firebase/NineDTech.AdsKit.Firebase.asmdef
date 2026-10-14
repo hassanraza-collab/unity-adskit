@@ -1,0 +1,18 @@
+{
+    "name": "NineDTech.AdsKit.Firebase",
+    "rootNamespace": "NineDTech.AdsKit.Firebase",
+    "references": [
+        "NineDTech.AdsKit.Core"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "ADSKIT_FIREBASE"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
