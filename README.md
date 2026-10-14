@@ -8,12 +8,14 @@ AdsKit is an exportable Unity package. It provides:
 
 > Status: **in development (0.x)**. The API is not stable yet.
 
+**New project? Read [Documentation~/QUICK_START.md](Documentation~/QUICK_START.md) (one page).**
+
 ## Install
 
 Add the package to the game's `Packages/manifest.json`. Pin a release tag:
 
 ```json
-"com.ninedtech.adskit": "https://github.com/hassanraza-collab/unity-adskit.git#v0.1.0"
+"com.ninedtech.adskit": "https://github.com/hassanraza-collab/unity-adskit.git#v0.5.0"
 ```
 
 For local development, point to the folder instead:

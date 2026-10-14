@@ -2,6 +2,14 @@
 
 All notable changes to this package are documented here. Versions follow [Semantic Versioning](https://semver.org).
 
+## [0.5.0] - 2026-10-14
+First release for use in other projects.
+### Added
+- **Tools > AdsKit > Install Mediation Adapters**: writes the version-locked adapter files for BOTH stacks (MAX: Google, Pangle, Mintegral, Liftoff, Unity Ads; AdMob: AppLovin, Pangle, Mintegral, Liftoff, Unity Ads) incl. Integration Manager labels. The lock lives in `AdsKitAdapterInstaller`.
+- `AdsBannerInset` component: keeps a UI rect clear of the banner.
+- Samples~/Starter: `MyGameAdsHooks` template + `AdsKitStarter` bootstrap with every placement call.
+- Documentation~/QUICK_START.md.
+
 ## [0.4.5] - 2026-10-14
 ### Changed
 - Cold start: when the mediation provider is already known (A/B group locked, or no A/B test), consent + SDK init start immediately in parallel with the Remote Config fetch instead of after it (device test: the splash window closed before init finished).

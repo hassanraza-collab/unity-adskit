@@ -33,6 +33,9 @@ Search the game code and list:
 - **UI layout:** the bottom UI that a banner could cover (it needs a safe-area offset).
 - **Analytics sources:** an existing event system for level start/end/restart/quit, tutorials and screens.
 
+## 1b. Adapters
+Run **Tools → AdsKit → Install Mediation Adapters** (version-locked, both stacks) then EDM Force Resolve. Never upgrade adapters in the AppLovin Integration Manager.
+
 ## 2. Config assets
 1. Get the game's `ads_config` JSON. The owner keeps it as the Firebase Remote Config default value. If there is none yet, start from `Documentation~/ads_config.example.json` and change the placement ids.
 2. In Unity, run **Tools → AdsKit → Import ads_config JSON...** and choose a folder such as `Assets/<Game>/Config/AdsKit`. This creates `AdsSettings`, `AnalyticsSettings`, one asset per ad unit and one per placement.
