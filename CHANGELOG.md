@@ -2,6 +2,9 @@
 
 All notable changes to this package are documented here. Versions follow [Semantic Versioning](https://semver.org).
 
+## [Unreleased]
+### Fixed
+- **Crash before the mediation is resolved.** `AdsRuntimeConfig.GetUnitId` threw `ArgumentNullException` (key) when called while `MediationId` was still null (Remote Config fetch or A/B assignment pending); it now returns null.
 ## [0.6.1] - 2026-10-14
 Start-up and threading safety fixes from the SDK init audit.
 ### Fixed

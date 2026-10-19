@@ -33,7 +33,8 @@ namespace NineDTech.AdsKit.Ads
 
         public string GetUnitId(string provider, string unitKey)
         {
-            if (string.IsNullOrEmpty(unitKey)) return null;
+            // The provider is null until the mediation is resolved (Remote Config fetch / A/B assignment pending).
+            if (string.IsNullOrEmpty(provider) || string.IsNullOrEmpty(unitKey)) return null;
             if (_unitIds.TryGetValue(provider, out var ids) && ids.TryGetValue(unitKey, out var id) && !string.IsNullOrEmpty(id))
                 return id;
             // The simulator accepts any id, so it never needs real ones.
