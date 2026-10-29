@@ -19,6 +19,8 @@ namespace NineDTech.AdsKit.Ads
         private double _nextRetryAt;
         private int _requestId;
         private float _lastHeight = -1f;
+        // Read once per load: the provider height is a native call (AdMob's blocks on the Android UI thread).
+        private float _loadedHeight;
 
         public BannerController(AdsService service)
         {
@@ -29,7 +31,7 @@ namespace NineDTech.AdsKit.Ads
         /// <summary>Game-requested hide (e.g. a full-screen menu). The banner stays loaded.</summary>
         public bool Suppressed { get; set; }
 
-        public float HeightPixels => _visible && _service.Provider != null ? _service.Provider.BannerHeightPixels : 0f;
+        public float HeightPixels => _visible ? _loadedHeight : 0f;
 
         public string DebugState =>
             (_visible ? "visible" : "hidden") + (_loading ? " loading" : "") +
@@ -65,7 +67,6 @@ namespace NineDTech.AdsKit.Ads
             }
 
             SetVisible(true);
-            ReportHeight();
         }
 
         public void OnFullscreen(bool open)
@@ -92,6 +93,7 @@ namespace NineDTech.AdsKit.Ads
             if (result.Success)
             {
                 _loadedUnitId = unitId;
+                _loadedHeight = _service.Provider != null ? _service.Provider.BannerHeightPixels : 0f;
                 _attempts = 0;
                 KitLog.Info("Banner loaded" + (string.IsNullOrEmpty(result.Network) ? "" : " (" + result.Network + ")"));
                 return;
