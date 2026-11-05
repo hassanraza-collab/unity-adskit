@@ -124,6 +124,9 @@ namespace NineDTech.AdsKit.Ads
         /// <summary>Fires once when the SDK finished initializing.</summary>
         public event Action Ready;
 
+        /// <summary>Every paid impression, on the main thread, with the resolved placement and currency.</summary>
+        public event Action<AdRevenueEvent> RevenuePaid;
+
         private int PlayerLevel => _hooks != null ? _hooks.CurrentLevel : 0;
         private bool AdsRemoved => _hooks != null && _hooks.AdsRemoved;
         private static bool Online => Application.internetReachability != NetworkReachability.NotReachable;
@@ -508,6 +511,22 @@ namespace NineDTech.AdsKit.Ads
         {
             if (!_skipNextResume) KitLog.Info("Next resume will not show an app-open ad");
             _skipNextResume = true;
+        }
+
+        private int _externalScreens;
+
+        /// <summary>
+        /// An in-app screen that can send the player out of the app (privacy options form and its partner links) is
+        /// open: every return from the background shows nothing until <see cref="EndExternalScreen"/>.
+        /// </summary>
+        public void BeginExternalScreen()
+        {
+            if (_externalScreens++ == 0) KitLog.Info("External screen open: resumes show no app-open ad");
+        }
+
+        public void EndExternalScreen()
+        {
+            if (_externalScreens > 0) _externalScreens--;
         }
 
         public bool WelcomeBackActive => _welcomeBackActive;
@@ -947,7 +966,7 @@ namespace NineDTech.AdsKit.Ads
             var suppressed = _skipNextResume;
             _skipNextResume = false;
             if (State != InitState.Ready || _active != null || _welcomeBackActive || _context == AdsIds.ContextSplash) return;
-            if (suppressed)
+            if (suppressed || _externalScreens > 0)
             {
                 KitLog.Info("Resume: returning from an ad click / external screen; no app-open ad");
                 return;
@@ -1041,6 +1060,15 @@ namespace NineDTech.AdsKit.Ads
                 .Add("currency", currency)
                 .Add("value", e.Value)
                 .Log();
+
+            if (RevenuePaid != null)
+            {
+                var resolved = e;
+                resolved.Placement = placement;
+                resolved.Currency = currency;
+                try { RevenuePaid(resolved); }
+                catch (Exception ex) { Debug.LogException(ex); }
+            }
 
             if (currency != "USD" || e.Value <= 0) return;
             _revenueTotal += e.Value;
@@ -1269,8 +1297,9 @@ namespace NineDTech.AdsKit.Ads
             if (_banner != null) sb.Append("banner: ").Append(_banner.DebugState).Append('\n');
             if (_config.Mrec != null) sb.Append("mrec: ").Append(_mrecState).Append(_mrecVisible ? " visible" : "")
                 .Append(_mrecAttempts > 0 ? " fails " + _mrecAttempts : "").Append('\n');
-            if (_skipNextResume || _welcomeBackActive)
-                sb.Append(_welcomeBackActive ? "WELCOME BACK" : "").Append(_skipNextResume ? " next resume suppressed" : "").Append('\n');
+            if (_skipNextResume || _welcomeBackActive || _externalScreens > 0)
+                sb.Append(_welcomeBackActive ? "WELCOME BACK" : "").Append(_skipNextResume ? " next resume suppressed" : "")
+                    .Append(_externalScreens > 0 ? " external screen open" : "").Append('\n');
         }
 
         private static int Remaining(double last, float cooldown, double now) => Mathf.Max(0, (int)(cooldown - (now - last)));

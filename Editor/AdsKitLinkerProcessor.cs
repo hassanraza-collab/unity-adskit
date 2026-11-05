@@ -23,7 +23,11 @@ namespace NineDTech.AdsKit.Editor
             "NineDTech.AdsKit.Ads",
             "NineDTech.AdsKit.Firebase",
             "NineDTech.AdsKit.Max",
-            "NineDTech.AdsKit.AdMob"
+            "NineDTech.AdsKit.AdMob",
+            "NineDTech.AdsKit.Adjust",
+            // Adjust's AndroidJavaProxy callbacks are invoked by name from Java; a link.xml inside its UPM
+            // package would be ignored.
+            "AdjustSdk.Scripts"
         };
 
         public int callbackOrder => 0;

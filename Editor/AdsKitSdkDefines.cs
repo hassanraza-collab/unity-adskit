@@ -11,7 +11,7 @@ namespace NineDTech.AdsKit.Editor
     /// <summary>
     /// Detects which SDKs are installed (as .unitypackage or UPM) and keeps the matching scripting defines in sync,
     /// so each AdsKit provider assembly compiles only when its SDK exists:
-    /// ADSKIT_FIREBASE, ADSKIT_FIREBASE_CRASHLYTICS, ADSKIT_MAX, ADSKIT_ADMOB.
+    /// ADSKIT_FIREBASE, ADSKIT_FIREBASE_CRASHLYTICS, ADSKIT_MAX, ADSKIT_ADMOB, ADSKIT_ADJUST.
     /// </summary>
     [InitializeOnLoad]
     public static class AdsKitSdkDefines
@@ -27,7 +27,8 @@ namespace NineDTech.AdsKit.Editor
             new Sdk { Define = "ADSKIT_FIREBASE", Assemblies = new[] { "Firebase.App", "Firebase.Analytics", "Firebase.RemoteConfig" } },
             new Sdk { Define = "ADSKIT_FIREBASE_CRASHLYTICS", Assemblies = new[] { "Firebase.App", "Firebase.Crashlytics" } },
             new Sdk { Define = "ADSKIT_MAX", Assemblies = new[] { "MaxSdk.Scripts" } },
-            new Sdk { Define = "ADSKIT_ADMOB", Assemblies = new[] { "GoogleMobileAds" } }
+            new Sdk { Define = "ADSKIT_ADMOB", Assemblies = new[] { "GoogleMobileAds" } },
+            new Sdk { Define = "ADSKIT_ADJUST", Assemblies = new[] { "AdjustSdk.Scripts" } }
         };
 
         private static readonly NamedBuildTarget[] Targets = { NamedBuildTarget.Android, NamedBuildTarget.Standalone };

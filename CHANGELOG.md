@@ -3,6 +3,14 @@
 All notable changes to this package are documented here. Versions follow [Semantic Versioning](https://semver.org).
 
 ## [Unreleased]
+### Added
+- **Adjust attribution (`NineDTech.AdsKit.Adjust`, compiles only with `ADSKIT_ADJUST`, set automatically when the Adjust Unity SDK 5.x `AdjustSdk.Scripts` is installed).** Starts Adjust after the UMP consent result (or `consentWaitSeconds`) and sends Google DMA consent (`google_dma` eea / ad_personalization / ad_user_data) before the first session and on every change. Forwards every paid MAX / AdMob impression as Adjust ad revenue (`applovin_max_sdk` / `admob_sdk`, network, unit, placement). Sends IAP revenue events (optional Adjust Purchase Verification) and the analytics events mapped in `AttributionSettings.events`. Sandbox in the Editor and development builds, Production in release (`EnvironmentMode.Auto`). In the Editor calls are only logged.
+- `Attribution` facade, `AttributionSettings` asset (AdsKit/Attribution Settings) and `AttributionPurchase` in Core, so games and IapKit report purchases without referencing the SDK.
+- `Ads.RevenuePaid` / `AdsService.RevenuePaid`: every paid impression with the resolved placement and currency.
+- The SDK defines and generated link.xml cover Adjust (`ADSKIT_ADJUST`; `NineDTech.AdsKit.Adjust` and `AdjustSdk.Scripts` preserved).
+
+### Fixed
+- **No app-open ad while the privacy options form is open.** `Ads.ShowPrivacyOptions` now holds every resume (no Welcome Back screen, no app-open ad) until the form closes, so returning from a partner privacy page in the browser no longer shows an ad over the form. New `AdsService.BeginExternalScreen` / `EndExternalScreen` for other in-app screens that can leave the app.
 
 ## [0.6.2] - 2026-10-28
 ### Fixed

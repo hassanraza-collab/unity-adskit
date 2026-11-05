@@ -32,12 +32,19 @@ namespace NineDTech.AdsKit.Ads
         /// <summary>Raised once the mediation SDK is initialized.</summary>
         public static event Action Ready;
 
+        /// <summary>
+        /// Every paid impression (resolved placement and currency) while <see cref="MediationId"/> is the serving
+        /// mediation. Used by MMP forwarding (Adjust). Subscribe any time, even before init.
+        /// </summary>
+        public static event Action<AdRevenueEvent> RevenuePaid;
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStatics()
         {
             Service = null;
             BannerHeightChanged = null;
             Ready = null;
+            RevenuePaid = null;
         }
 
         /// <summary>Start AdsKit: Remote Config, A/B assignment, consent, SDK init. Call once, as early as possible (splash).</summary>
@@ -56,6 +63,7 @@ namespace NineDTech.AdsKit.Ads
             Service = new AdsService(settings, hooks);
             Service.BannerHeightChanged += h => BannerHeightChanged?.Invoke(h);
             Service.Ready += () => Ready?.Invoke();
+            Service.RevenuePaid += e => RevenuePaid?.Invoke(e);
             Service.Initialize();
         }
 
@@ -128,8 +136,23 @@ namespace NineDTech.AdsKit.Ads
         /// <summary>GDPR: show a "Privacy options" button in settings when true.</summary>
         public static bool PrivacyOptionsRequired => AdsConsent.Provider.PrivacyOptionsRequired;
 
-        /// <summary>Open the consent privacy options form (settings button).</summary>
-        public static void ShowPrivacyOptions(Action onClosed = null) => AdsConsent.ShowPrivacyOptions(onClosed);
+        /// <summary>
+        /// Open the consent privacy options form (settings button). While it is open (including trips to partner
+        /// privacy pages in the browser) returns from the background show no Welcome Back screen and no app-open ad.
+        /// </summary>
+        public static void ShowPrivacyOptions(Action onClosed = null)
+        {
+            var service = Service;
+            service?.BeginExternalScreen();
+            var closed = false;
+            AdsConsent.ShowPrivacyOptions(() =>
+            {
+                if (closed) return;
+                closed = true;
+                service?.EndExternalScreen();
+                onClosed?.Invoke();
+            });
+        }
 
         /// <summary>Open MAX Mediation Debugger / AdMob Ad Inspector.</summary>
         public static void OpenDebugger() => Service?.OpenDebugger();

@@ -139,6 +139,14 @@ In the game's settings screen add a **Privacy options** button, visible only whe
   `Analytics.AddCommonParams(b => b.AddIfMissing(AnalyticsParam.Of("lvl", (long)SaveData.HighestLevel)));`
 - **Naming rules:** names are letters, digits and `_`, at most 40 characters, at most 25 parameters per event. Never use Firebase-reserved names (`ad_click`, `ad_reward`, `error`, `session_start`, ...). `AnalyticsNames.ValidateEventName` checks this.
 
+## 8b. Attribution (Adjust, optional)
+1. Install the Adjust Unity SDK 5.x through UPM: `"com.adjust.sdk": "https://github.com/adjust/unity_sdk.git?path=Assets/Adjust#v5.8.1"`. EDM4U resolves `adjust-android` and the install referrer. `ADSKIT_ADJUST` is then set automatically.
+2. Create **AdsKit → Attribution Settings**. Set `appToken`, plus event tokens from the Adjust dashboard: `purchaseEventToken`, an optional `subscriptionEventToken`, and `events` (for example `level_milestone_10` → token). Leave `environment` on Auto, so Sandbox is used in the Editor and development builds and Production in release builds.
+3. On the splash, call `Attribution.Initialize(attributionSettings)` **before** `Ads.Initialize`. Adjust waits for the UMP result and sends Google DMA consent before its first session.
+4. Nothing else. Ad revenue comes from `Ads.RevenuePaid`, and IAP revenue comes from IapKit. The game never calls `AdjustSdk` directly.
+5. Android R8: add `-keep class com.adjust.sdk.** { *; }` and `-keep public class com.android.installreferrer.** { *; }` to the game's proguard-user.txt.
+6. In the Adjust dashboard, enable ad revenue for AppLovin MAX and AdMob, otherwise the forwarded revenue is dropped. Purchase Verification (`verifyPurchases`) is a paid add-on.
+
 ## 9. Verify (in the Editor, simulator)
 Turn on `AdsSettings.showDebugHud` and press Play. Then check:
 - [ ] The console shows `[AdsKit] simulator ready` and `Context: home`.
