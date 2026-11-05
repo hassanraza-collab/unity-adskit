@@ -1,5 +1,7 @@
 # AdsKit analytics events
 
+> **Studio rules first:** every game must follow [ANALYTICS_STANDARD.md](ANALYTICS_STANDARD.md) (owner: Hassan Raza). This file lists AdsKit's own events in detail.
+
 **Firebase rules:**
 - Event names have at most 40 characters; there are at most 25 parameters per event.
 - String values are cut at 100 characters.
