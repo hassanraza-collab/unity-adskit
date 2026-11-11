@@ -17,6 +17,10 @@ namespace NineDTech.AdsKit.Attribution
         public bool FreeTrial;
         /// <summary>True when the store delivered it without a purchase started this session.</summary>
         public bool Redelivered;
+        /// <summary>Removes ads (a Remove Ads product or the VIP subscription): also sends remove_ads_purchase.</summary>
+        public bool RemovesAds;
+        /// <summary>Where in the game it was bought (shop, popup, level_end...). Sent as the placement callback param.</summary>
+        public string Placement;
     }
 
     /// <summary>Implemented by an MMP provider assembly (NineDTech.AdsKit.Adjust).</summary>

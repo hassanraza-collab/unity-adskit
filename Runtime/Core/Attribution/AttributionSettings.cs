@@ -49,10 +49,20 @@ namespace NineDTech.AdsKit.Attribution
         public bool trackAdRevenue = true;
 
         [Header("In-app purchases")]
-        [Tooltip("Revenue event token for one-time purchases (consumables, Remove Ads). Empty = not tracked.")]
+        [Tooltip("Studio standard 'purchase': revenue event token for every purchase (consumables, Remove Ads, VIP). " +
+                 "Empty = purchases not tracked.")]
         public string purchaseEventToken;
 
-        [Tooltip("Revenue event token for subscription purchases. Empty = use purchaseEventToken.")]
+        [Tooltip("Studio standard 'first_purchase': revenue event sent once per player, on the first paid purchase. " +
+                 "Empty = not sent.")]
+        public string firstPurchaseEventToken;
+
+        [Tooltip("Studio standard 'remove_ads_purchase': revenue event for Remove Ads or VIP purchases " +
+                 "(AttributionPurchase.RemovesAds). Empty = not sent.")]
+        public string removeAdsPurchaseEventToken;
+
+        [Tooltip("Legacy, leave empty: the studio standard sends subscriptions as 'purchase' too. When set, " +
+                 "subscriptions go to this token instead of purchaseEventToken.")]
         public string subscriptionEventToken;
 
         [Tooltip("Also track purchases the store redelivers without a purchase started this session " +

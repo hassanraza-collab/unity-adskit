@@ -159,13 +159,44 @@ namespace NineDTech.AdsKit.Adjust
             });
         }
 
-        private void SendPurchase(AttributionPurchase p, string token)
+        private const string FirstPurchaseSentKey = "adskit.adjust.first_purchase_sent";
+
+        /// <summary>
+        /// first_purchase (once per player) and remove_ads_purchase, each with the same store revenue. Sent after the
+        /// main purchase event, and only when verification did not reject the receipt.
+        /// </summary>
+        private void SendFollowUps(AttributionPurchase p)
+        {
+            if (!string.IsNullOrEmpty(_settings.firstPurchaseEventToken) && PlayerPrefs.GetInt(FirstPurchaseSentKey, 0) == 0)
+            {
+                PlayerPrefs.SetInt(FirstPurchaseSentKey, 1);
+                PlayerPrefs.Save();
+                var first = NewRevenueEvent(_settings.firstPurchaseEventToken, p, ":first");
+                Call("first_purchase " + p.ProductId, () => AdjustSdk.Adjust.TrackEvent(first));
+            }
+            if (p.RemovesAds && !string.IsNullOrEmpty(_settings.removeAdsPurchaseEventToken))
+            {
+                var noAds = NewRevenueEvent(_settings.removeAdsPurchaseEventToken, p, ":noads");
+                Call("remove_ads_purchase " + p.ProductId, () => AdjustSdk.Adjust.TrackEvent(noAds));
+            }
+        }
+
+        /// <summary>Revenue event with the store price and the studio-standard callback params.</summary>
+        private static AdjustEvent NewRevenueEvent(string token, AttributionPurchase p, string dedupSuffix)
         {
             var e = new AdjustEvent(token);
             e.SetRevenue((double)p.Price, p.Currency);
             e.ProductId = p.ProductId;
-            if (!string.IsNullOrEmpty(p.TransactionId)) e.DeduplicationId = p.TransactionId;
+            // The SDK keeps one list of deduplication IDs for all events, so each event type gets its own ID.
+            if (!string.IsNullOrEmpty(p.TransactionId)) e.DeduplicationId = p.TransactionId + dedupSuffix;
             e.AddCallbackParameter("product_id", p.ProductId ?? "");
+            if (!string.IsNullOrEmpty(p.Placement)) e.AddCallbackParameter("placement", p.Placement);
+            return e;
+        }
+
+        private void SendPurchase(AttributionPurchase p, string token)
+        {
+            var e = NewRevenueEvent(token, p, "");
             ReadGooglePlayReceipt(p.Receipt, out var purchaseToken, out var orderId);
 
             if (Application.platform == RuntimePlatform.Android)
@@ -175,7 +206,7 @@ namespace NineDTech.AdsKit.Adjust
                 if (_settings.verifyPurchases)
                 {
                     Call("verify+track Play purchase " + p.ProductId, () => AdjustSdk.Adjust.VerifyAndTrackPlayStorePurchase(e,
-                        r => KitLog.Info("Adjust purchase verification: " + r?.VerificationStatus + " (" + r?.Code + ")")));
+                        r => OnVerified(p, r?.VerificationStatus, r?.Code ?? 0)));
                     return;
                 }
             }
@@ -185,12 +216,27 @@ namespace NineDTech.AdsKit.Adjust
                 if (_settings.verifyPurchases)
                 {
                     Call("verify+track App Store purchase " + p.ProductId, () => AdjustSdk.Adjust.VerifyAndTrackAppStorePurchase(e,
-                        r => KitLog.Info("Adjust purchase verification: " + r?.VerificationStatus + " (" + r?.Code + ")")));
+                        r => OnVerified(p, r?.VerificationStatus, r?.Code ?? 0)));
                     return;
                 }
             }
             Call("purchase " + p.ProductId + " " + p.Price.ToString(CultureInfo.InvariantCulture) + " " + p.Currency,
                 () => AdjustSdk.Adjust.TrackEvent(e));
+            SendFollowUps(p);
+        }
+
+        /// <summary>
+        /// Adjust has checked the receipt. A rejected (fake) or duplicate purchase gets no follow-up events; "verified" and
+        /// unknown results (e.g. a network error, or verification not enabled in the dashboard) do.
+        /// </summary>
+        private void OnVerified(AttributionPurchase p, string status, int code)
+        {
+            KitRunner.RunOnMainThread(() =>
+            {
+                KitLog.Info("Adjust purchase verification: " + status + " (" + code + ")");
+                if (_settings == null || status == "not_verified" || status == "duplicate") return;
+                SendFollowUps(p);
+            });
         }
 
         /// <summary>Unity IAP receipt: {"Payload": "{\"json\": \"{...purchaseToken, orderId...}\", ...}"} on Google Play.</summary>

@@ -1,6 +1,6 @@
-# Studio Analytics Standard
+﻿# Studio Analytics Standard
 
-**Owner:** Hassan Raza (approves every change) · **Master copy:** https://claude.ai/artifact/FZaSonudx2LmXL1DPfgVg8 · **Version:** 1.0 (2026-11-05)
+**Owner:** Hassan Raza (approves every change) · **Master copy:** https://claude.ai/artifact/2Mb5fsbXofsR4qCw6zsB2j · **Version:** 1.0 (2026-11-05)
 
 This file ships with AdsKit so every game that uses AdsKit follows the same analytics rules. The online document above is the master copy; this file is updated from it with each AdsKit release. Suggest changes as comments on the online document.
 
@@ -72,7 +72,7 @@ The same numbers, built from the same events, for every game: day 1, 7 and 30 re
 
 ## Part 2: Developer reference
 
-The exact event names, parameters and setup steps. Everything here is logged through AdsKit's `Analytics` wrapper, which sends to Firebase (GA4) and the BigQuery export. The RR column is the status in Rotate Rings, the reference game. Per-event detail for AdsKit's automatic events is in `ANALYTICS_EVENTS.md`.
+The exact event names, parameters and setup steps. Everything here is logged through AdsKit's `Analytics` wrapper, which sends to Firebase (GA4) and the BigQuery export, and under the same names to GameAnalytics and (mapped events only) Adjust; see "One standard in Firebase, GameAnalytics and Adjust". The RR column is the status in Rotate Rings, the reference game. Per-event detail for AdsKit's automatic events is in `ANALYTICS_EVENTS.md`.
 
 ### Naming rules
 
@@ -160,7 +160,7 @@ Keep the bucket edges identical in every game.
 | `iap_store_ready` | `result`, `reason`, `backend` |
 | `iap_screen_shown` | `screen`, `placement`, `lvl` (game calls `IapApi.LogScreenShown`) |
 | `iap_close` | `screen`, `placement`, `lvl`, `secs` (closed without buying; `IapApi.LogScreenClosed`) |
-| `iap_purchase_start` | `product`, `product_id`, `placement`, `type`, `price`, `lvl` |
+| `iap_purchase_start` | `product`, `product_id`, `placement`, `type`, `item_type` (`vip` / `no_ads` / `currency` / `item`), `price`, `lvl` |
 | `iap_purchase_success` | as start + `value`, `currency`, `trial`, `restored`, `secs` |
 | `iap_purchase_pending` | as start |
 | `iap_purchase_fail` | as start + `reason` |
@@ -185,6 +185,35 @@ Offers and the store are "screens": every offer popup logs `iap_screen_shown` / 
 | `notification_toggle` | `on` | live |
 | `rate_prompt` | `choice` (shown / rate / later), `source` (post_win / exit_panel), `level`, `stars` | added, untested |
 | `setting_changed` | `setting` (music / sound / vibration / voice / language), `value` | added, untested |
+
+### One standard in Firebase, GameAnalytics and Adjust
+
+The game logs each event once through `Analytics`; AdsKit sends it to every tool. Firebase names are the master. GameAnalytics and Adjust never get names of their own, so the same funnel can be built in Firebase and in GameAnalytics.
+
+**GameAnalytics** (`NineDTech.AdsKit.GameAnalytics`, automatic when the GA SDK is installed):
+
+| Firebase | GameAnalytics |
+| --- | --- |
+| every event | design event, same name (e.g. `booster_used`); params as custom fields (data export only) |
+| `level_start` | + progression Start `level_0001` |
+| `level_end` | + progression Complete (Fail if `success` = 0) `level_0001` |
+| `level_restart` / `level_quit` / `level_abandon` / `level_fail` | + progression Fail `level_0001`, field `reason` = `restart` / `quit` / `abandon` / the fail reason |
+| `ad_show` / `ad_show_fail` / `ad_clicked` / `ad_rewarded` | + ad event (type from `ad_format`, network from `med`, `placement`) |
+| `iap_purchase_success` | + business event: amount in cents, itemType = `item_type`, item = `product_id`, cart = `placement` |
+| `ad_impression` / `adskit_impression` | not sent (ad revenue goes through the GA ad revenue plugin) |
+| user property `ab_group` / `player_type` / `max_level` | + custom dimension 01 / 02 / 03 (all user properties are also global custom fields) |
+
+- Level ids always have 4 digits (`level_0001`), so they sort correctly up to level 9999. Games with modes put the mode first: `{mode}_level_0001`.
+- Type every custom dimension value into the GA settings asset before launch (`player_type`: `non_payer`, `payer`, `vip`; `max_level`: the buckets above; `ab_group`: each live variant). GA drops values that are not listed.
+
+**Adjust** (`NineDTech.AdsKit.Adjust`): only the events mapped in `AttributionSettings.events` are sent, each under a token whose dashboard name is the Adjust name.
+
+| Adjust | From |
+| --- | --- |
+| `tutorial_complete` | `tutorial_complete` |
+| `level_5` … `level_50` | `level_milestone_5` … `level_milestone_50` |
+| `purchase` / `first_purchase` / `remove_ads_purchase` | automatic (IapKit purchase, `purchaseEventToken` / `firstPurchaseEventToken` / `removeAdsPurchaseEventToken`) |
+| ad revenue | automatic (`trackAdRevenue`) |
 
 ### Adding game-only events
 
@@ -230,5 +259,6 @@ Never call `FirebaseAnalytics.LogEvent` directly. Template: Rotate Rings' `GameA
 - [ ] `level_start` ≈ `level_end` + `level_restart` + `level_quit` + `level_abandon`.
 - [ ] Per placement: `ad_opportunity` ≥ `ad_show` ≥ `ad_close`.
 - [ ] Ad revenue shows in Firebase and Adjust.
+- [ ] GameAnalytics Realtime shows the same design event names as Firebase DebugView, plus progression `level_0001`.
 - [ ] A test purchase logs `iap_purchase_start` → `iap_purchase_success` with `value` and `currency`.
 - [ ] No name breaks the limits or uses a reserved name.

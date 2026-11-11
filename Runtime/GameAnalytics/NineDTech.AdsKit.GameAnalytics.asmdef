@@ -1,0 +1,19 @@
+{
+    "name": "NineDTech.AdsKit.GameAnalytics",
+    "rootNamespace": "NineDTech.AdsKit.GameAnalytics",
+    "references": [
+        "NineDTech.AdsKit.Core",
+        "GameAnalyticsSDK"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "ADSKIT_GAMEANALYTICS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

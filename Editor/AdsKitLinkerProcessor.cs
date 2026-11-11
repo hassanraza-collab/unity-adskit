@@ -27,7 +27,10 @@ namespace NineDTech.AdsKit.Editor
             "NineDTech.AdsKit.Adjust",
             // Adjust's AndroidJavaProxy callbacks are invoked by name from Java; a link.xml inside its UPM
             // package would be ignored.
-            "AdjustSdk.Scripts"
+            "AdjustSdk.Scripts",
+            "NineDTech.AdsKit.GameAnalytics",
+            // GameAnalytics native log and ATT callbacks are invoked from native code.
+            "GameAnalyticsSDK"
         };
 
         public int callbackOrder => 0;
