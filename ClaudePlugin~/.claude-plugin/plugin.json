@@ -1,7 +1,7 @@
-{
+﻿{
   "name": "adskit",
-  "version": "0.5.0",
-  "description": "Integrate and update the AdsKit Unity package (com.ninedtech.adskit) in a Unity game.",
+  "version": "0.6.0",
+  "description": "Integrate and update the AdsKit (com.ninedtech.adskit) and IapKit (com.ninedtech.iapkit) Unity packages in a Unity game.",
   "author": {
     "name": "hassanraza-collab"
   }
