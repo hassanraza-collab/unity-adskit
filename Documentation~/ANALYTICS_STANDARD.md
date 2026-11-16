@@ -215,6 +215,13 @@ The game logs each event once through `Analytics`; AdsKit sends it to every tool
 | `purchase` / `first_purchase` / `remove_ads_purchase` | automatic (IapKit purchase, `purchaseEventToken` / `firstPurchaseEventToken` / `removeAdsPurchaseEventToken`) |
 | ad revenue | automatic (`trackAdRevenue`) |
 
+**Revenue accuracy rules (ROAS):**
+- Only `purchase` carries Adjust revenue. `first_purchase` and `remove_ads_purchase` are count-only (price in callback params), because Adjust adds up revenue from every event.
+- Ad revenue values are USD per impression: AdMob micros are divided by 1,000,000, MAX revenue is used as is (never divide by 1,000; that is eCPM).
+- Firebase `ad_impression`: logged automatically by Firebase in the AdMob group, by AdsKit in the MAX group. Never both.
+- Google Ads value conversions: `ad_impression` + `in_app_purchase` only. `adskit_impression` and `ad_revenue_tier_*` also carry `value` and would double count.
+- Adjust ad revenue: SDK sources only (`applovin_max_sdk` / `admob_sdk`); do not also connect the AppLovin server-to-server API key.
+
 ### Adding game-only events
 
 1. Reuse first: add a parameter to a standard event before making a new one.

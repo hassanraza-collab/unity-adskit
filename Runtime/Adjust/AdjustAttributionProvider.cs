@@ -162,8 +162,9 @@ namespace NineDTech.AdsKit.Adjust
         private const string FirstPurchaseSentKey = "adskit.adjust.first_purchase_sent";
 
         /// <summary>
-        /// first_purchase (once per player) and remove_ads_purchase, each with the same store revenue. Sent after the
-        /// main purchase event, and only when verification did not reject the receipt.
+        /// first_purchase (once per player) and remove_ads_purchase. Sent after the main purchase event, and only when
+        /// verification did not reject the receipt. Count-only: Adjust adds up revenue from every event, so only the
+        /// main purchase event carries revenue; these carry the price as callback params instead.
         /// </summary>
         private void SendFollowUps(AttributionPurchase p)
         {
@@ -171,21 +172,29 @@ namespace NineDTech.AdsKit.Adjust
             {
                 PlayerPrefs.SetInt(FirstPurchaseSentKey, 1);
                 PlayerPrefs.Save();
-                var first = NewRevenueEvent(_settings.firstPurchaseEventToken, p, ":first");
+                var first = NewPurchaseEvent(_settings.firstPurchaseEventToken, p, ":first", false);
                 Call("first_purchase " + p.ProductId, () => AdjustSdk.Adjust.TrackEvent(first));
             }
             if (p.RemovesAds && !string.IsNullOrEmpty(_settings.removeAdsPurchaseEventToken))
             {
-                var noAds = NewRevenueEvent(_settings.removeAdsPurchaseEventToken, p, ":noads");
+                var noAds = NewPurchaseEvent(_settings.removeAdsPurchaseEventToken, p, ":noads", false);
                 Call("remove_ads_purchase " + p.ProductId, () => AdjustSdk.Adjust.TrackEvent(noAds));
             }
         }
 
-        /// <summary>Revenue event with the store price and the studio-standard callback params.</summary>
-        private static AdjustEvent NewRevenueEvent(string token, AttributionPurchase p, string dedupSuffix)
+        /// <summary>
+        /// Purchase event with the studio-standard callback params. Only the main purchase event sets Adjust revenue
+        /// (<paramref name="withRevenue"/>); follow-ups get revenue/currency as callback params so ROAS is not inflated.
+        /// </summary>
+        private static AdjustEvent NewPurchaseEvent(string token, AttributionPurchase p, string dedupSuffix, bool withRevenue)
         {
             var e = new AdjustEvent(token);
-            e.SetRevenue((double)p.Price, p.Currency);
+            if (withRevenue) e.SetRevenue((double)p.Price, p.Currency);
+            else
+            {
+                e.AddCallbackParameter("revenue", p.Price.ToString(CultureInfo.InvariantCulture));
+                e.AddCallbackParameter("currency", p.Currency ?? "");
+            }
             e.ProductId = p.ProductId;
             // The SDK keeps one list of deduplication IDs for all events, so each event type gets its own ID.
             if (!string.IsNullOrEmpty(p.TransactionId)) e.DeduplicationId = p.TransactionId + dedupSuffix;
@@ -196,7 +205,7 @@ namespace NineDTech.AdsKit.Adjust
 
         private void SendPurchase(AttributionPurchase p, string token)
         {
-            var e = NewRevenueEvent(token, p, "");
+            var e = NewPurchaseEvent(token, p, "", true);
             ReadGooglePlayReceipt(p.Receipt, out var purchaseToken, out var orderId);
 
             if (Application.platform == RuntimePlatform.Android)

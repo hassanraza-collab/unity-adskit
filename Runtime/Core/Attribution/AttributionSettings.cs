@@ -53,12 +53,14 @@ namespace NineDTech.AdsKit.Attribution
                  "Empty = purchases not tracked.")]
         public string purchaseEventToken;
 
-        [Tooltip("Studio standard 'first_purchase': revenue event sent once per player, on the first paid purchase. " +
+        [Tooltip("Studio standard 'first_purchase': sent once per player, on the first paid purchase. Count-only: it " +
+                 "carries no Adjust revenue (the price is in callback params), so IAP revenue is not counted twice. " +
                  "Empty = not sent.")]
         public string firstPurchaseEventToken;
 
-        [Tooltip("Studio standard 'remove_ads_purchase': revenue event for Remove Ads or VIP purchases " +
-                 "(AttributionPurchase.RemovesAds). Empty = not sent.")]
+        [Tooltip("Studio standard 'remove_ads_purchase': sent for Remove Ads or VIP purchases " +
+                 "(AttributionPurchase.RemovesAds). Count-only: no Adjust revenue, the price is in callback params. " +
+                 "Empty = not sent.")]
         public string removeAdsPurchaseEventToken;
 
         [Tooltip("Legacy, leave empty: the studio standard sends subscriptions as 'purchase' too. When set, " +
