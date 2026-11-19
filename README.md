@@ -44,6 +44,7 @@ The ad SDKs (AppLovin MAX, Google Mobile Ads, Firebase) are **not bundled**. Ins
 
 - `Documentation~/AI_INTEGRATION.md`: step-by-step integration (written for Claude, readable by humans).
 - `Documentation~/ANALYTICS_EVENTS.md`: every event, parameter and funnel.
+- `Documentation~/APP_UPDATE.md`: soft / hard update prompts from Remote Config (`AppUpdate`).
 - `ADSKIT_DEVELOPMENT.md`: development status, architecture and the version lock table.
 - `CHANGELOG.md` / `MIGRATION.md`: release notes and upgrade steps.
 

@@ -184,6 +184,7 @@ Offers and the store are "screens": every offer popup logs `iap_screen_shown` / 
 | `notification_open` | `type`, `remote` | live |
 | `notification_toggle` | `on` | live |
 | `rate_prompt` | `choice` (shown / rate / later), `source` (post_win / exit_panel), `level`, `stars` | added, untested |
+| `app_update_prompt` | `type` (soft / hard), `choice` (shown / update / later), `app_version`, `target_version` (logged by AdsKit `AppUpdate`) | added, untested |
 | `setting_changed` | `setting` (music / sound / vibration / voice / language), `value` | added, untested |
 
 ### One standard in Firebase, GameAnalytics and Adjust

@@ -64,6 +64,9 @@ namespace NineDTech.AdsKit.Ads
             Service.BannerHeightChanged += h => BannerHeightChanged?.Invoke(h);
             Service.Ready += () => Ready?.Invoke();
             Service.RevenuePaid += e => RevenuePaid?.Invoke(e);
+            // Coming back from the store after an update prompt is not a real resume (no app-open ad).
+            NineDTech.AdsKit.Update.AppUpdate.OpeningStore -= SuppressNextResume;
+            NineDTech.AdsKit.Update.AppUpdate.OpeningStore += SuppressNextResume;
             Service.Initialize();
         }
 
