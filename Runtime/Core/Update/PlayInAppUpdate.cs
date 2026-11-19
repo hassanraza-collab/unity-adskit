@@ -35,7 +35,9 @@ namespace NineDTech.AdsKit.Update
         private const int ResultOk = -1, ResultCanceled = 0;
 
         /// <summary>Install status changes of a flexible update (InstallStatus int, e.g. 2 downloading, 11 downloaded).</summary>
+#pragma warning disable CS0414 // only raised on Android device builds
         public static event Action<int> InstallStatusChanged;
+#pragma warning restore CS0414
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStatics()
