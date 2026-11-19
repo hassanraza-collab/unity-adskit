@@ -50,7 +50,7 @@ The ad SDKs (AppLovin MAX, Google Mobile Ads, Firebase) are **not bundled**. Ins
 
 ## Claude Code plugin
 
-This repo is also a Claude Code plugin marketplace with the `adskit-integrate` and `adskit-update` skills. Install it once per machine:
+This repo is also a Claude Code plugin marketplace with the `adskit-integrate`, `adskit-update`, `iapkit-integrate` and `appupdate-integrate` (soft/hard update prompts; pulls the latest game and AdsKit code first) skills. Install it once per machine (`/plugin marketplace update ninedtech-adskit` picks up new skills):
 
 ```
 /plugin marketplace add hassanraza-collab/unity-adskit

@@ -7,7 +7,7 @@
     {
       "name": "adskit",
       "source": "./ClaudePlugin~",
-      "description": "Skills to integrate and update the AdsKit Unity package (ads mediation, Remote Config, analytics) and IapKit (in-app purchases, VIP, remove ads) in any game."
+      "description": "Skills to integrate and update the AdsKit Unity package (ads mediation, Remote Config, analytics) and IapKit (in-app purchases, VIP, remove ads) in any game, plus soft/hard app update prompts (AppUpdate)."
     }
   ]
 }
