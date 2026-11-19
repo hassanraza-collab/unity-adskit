@@ -3,6 +3,8 @@
 All notable changes to this package are documented here. Versions follow [Semantic Versioning](https://semver.org).
 
 ## [Unreleased]
+
+## [0.7.1] - 2026-11-19
 ### Added
 - **Google Play in-app update for AppUpdate (Android).** New `app_update_config` field `update_ui`: `"custom"` (default, the game's popup) or `"google"` (Play In-App Updates: hard = immediate, soft = flexible download installed at the next `CanShowSoft` moment). The game's popup is the fallback when Play has no update or isn't available, the flow fails, or the player cancels a hard update. `PlayInAppUpdate` JNI bridge (no Unity plugin needed) and `Editor/AdsKitAppUpdateDependencies.xml` (`com.google.android.play:app-update:2.1.0`). `app_update_prompt` gains `ui` and the choices `failed` / `unavailable` / `install`.
 

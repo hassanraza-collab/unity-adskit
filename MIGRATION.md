@@ -2,6 +2,9 @@
 
 Steps needed in a game when updating AdsKit across versions. Breaking Remote Config schema changes ship under a new parameter name.
 
+## 0.7.0 -> 0.7.1
+No required code changes. Run **Android Resolver > Force Resolve** so `com.google.android.play:app-update` is added to `mainTemplate.gradle`. Optional: set `update_ui` to `"google"` in `app_update_config` to use Google Play in-app updates (see `Documentation~/APP_UPDATE.md`).
+
 ## 0.6.x -> 0.7.0
 No required code changes. Optional:
 - **App update prompts:** implement `IAppUpdatePresenter` and call `AppUpdate.Initialize` (see `Documentation~/APP_UPDATE.md`, or the Claude skill `appupdate-integrate`), then add the Remote Config parameter `app_update_config`.

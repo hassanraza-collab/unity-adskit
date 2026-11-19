@@ -3,7 +3,7 @@
 ## 1. Add the package
 In `Packages/manifest.json`:
 ```json
-"com.ninedtech.adskit": "https://github.com/hassanraza-collab/unity-adskit.git#v0.7.0"
+"com.ninedtech.adskit": "https://github.com/hassanraza-collab/unity-adskit.git#v0.7.1"
 ```
 
 ## 2. Import the SDKs

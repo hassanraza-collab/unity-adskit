@@ -15,7 +15,7 @@ AdsKit is an exportable Unity package. It provides:
 Add the package to the game's `Packages/manifest.json`. Pin a release tag:
 
 ```json
-"com.ninedtech.adskit": "https://github.com/hassanraza-collab/unity-adskit.git#v0.7.0"
+"com.ninedtech.adskit": "https://github.com/hassanraza-collab/unity-adskit.git#v0.7.1"
 ```
 
 For local development, point to the folder instead:
