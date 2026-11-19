@@ -2,6 +2,12 @@
 
 Steps needed in a game when updating AdsKit across versions. Breaking Remote Config schema changes ship under a new parameter name.
 
+## 0.6.x -> 0.7.0
+No required code changes. Optional:
+- **App update prompts:** implement `IAppUpdatePresenter` and call `AppUpdate.Initialize` (see `Documentation~/APP_UPDATE.md`, or the Claude skill `appupdate-integrate`), then add the Remote Config parameter `app_update_config`.
+- **Adjust** (only with the Adjust SDK installed): fill `AttributionSettings` (`purchaseEventToken`, `firstPurchaseEventToken`, `removeAdsPurchaseEventToken`). `subscriptionEventToken` is legacy: leave it empty. Set `AttributionPurchase.Placement` / `RemovesAds` when reporting purchases.
+- **GameAnalytics** (only with the GameAnalytics SDK installed): create `Resources/GameAnalytics/Settings`; AdsKit forwards every analytics event.
+
 ## 0.5.0 -> 0.6.0
 - Behaviour change: the app-open ad on resume no longer waits for the interstitial cooldown, and closing it restarts that cooldown. Remote `app_open_resume` gained `welcome_back_min_sec` / `timeout_sec`.
 - Optional, recommended (release checklist): override `ShowWelcomeBack()` / `HideWelcomeBack()` in your hooks to show a Welcome Back screen; mark win/level-select interstitials `priority`; call `Ads.SuppressNextResume()` before opening the store page, purchase sheet, share or permission dialogs.

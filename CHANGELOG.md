@@ -3,6 +3,8 @@
 All notable changes to this package are documented here. Versions follow [Semantic Versioning](https://semver.org).
 
 ## [Unreleased]
+
+## [0.7.0] - 2026-11-19
 ### Added
 - **App update prompts (`NineDTech.AdsKit.Update.AppUpdate`, Core).** Soft (dismissible) and hard (blocking) update prompts from the Remote Config JSON parameter `app_update_config`: `enabled`, `latest_version` (soft below), `min_version` (hard below), `soft_cooldown_hours`, `soft_max_shows` per latest_version, `store_url` (Android falls back to market://, iOS required), optional `soft_message` / `hard_message`. The game draws the popup through `IAppUpdatePresenter` and gates soft prompts with `AppUpdate.CanShowSoft`. Logs `app_update_prompt` (type, choice, app_version, target_version). Opening the store suppresses the next app-open ad when `Ads` is initialized. Guide: `Documentation~/APP_UPDATE.md`.
 - **GameAnalytics (`NineDTech.AdsKit.GameAnalytics`, compiles only with `ADSKIT_GAMEANALYTICS`, set automatically when the GameAnalytics SDK `GameAnalyticsSDK` is installed).** Starts GameAnalytics before the first scene when `Resources/GameAnalytics/Settings` exists and forwards every AdsKit analytics event: level events as progression events (`level_0001`, Start / Complete / Fail with reason restart or quit), `ad_show` / `ad_show_fail` / `ad_clicked` / `ad_rewarded` as ad events, `iap_purchase_success` as a business event, everything else as a design event; parameters become custom fields and user properties global custom fields. The linker keeps both assemblies.
