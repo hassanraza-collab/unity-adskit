@@ -5,6 +5,7 @@
   "soft_cooldown_hours": 24,
   "soft_max_shows": 3,
   "store_url": "",
+  "update_ui": "custom",
   "soft_message": "",
   "hard_message": ""
 }

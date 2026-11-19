@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Google Play In-App Updates for AdsKit AppUpdate (update_ui = "google"), resolved by the External Dependency Manager
+     into mainTemplate.gradle. Without it AppUpdate always uses the game's popup. -->
+<dependencies>
+  <androidPackages>
+    <androidPackage spec="com.google.android.play:app-update:2.1.0" />
+  </androidPackages>
+</dependencies>

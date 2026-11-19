@@ -14,6 +14,7 @@ See `app_update_config.example.json`.
 | `soft_cooldown_hours` | Minimum hours between soft prompts (default 24). |
 | `soft_max_shows` | Soft prompts per `latest_version` (default 3, 0 = unlimited). Resets when `latest_version` changes. |
 | `store_url` | Android empty = `market://details?id=<bundle id>`. **iOS must set it**: `itms-apps://apps.apple.com/app/id<APPID>`. |
+| `update_ui` | Android only. `"custom"` (default) = the game's popup. `"google"` = Google Play in-app update, with the game's popup as fallback (see below). Ignored on iOS. |
 | `soft_message` / `hard_message` | Optional text override (not translated). Empty = the game's localized text. |
 
 Versions compare as dotted numbers against `Application.version` (`1.2.10 > 1.2.9`).
@@ -26,7 +27,24 @@ until the App Store ID exists.
 - **Soft**: only when `AppUpdate.CanShowSoft` allows, once per session, within cooldown / max shows.
 - A soft prompt on screen escalates to hard if `min_version` is raised mid-session.
 - When `Ads` is initialized, opening the store calls `Ads.SuppressNextResume()` (no app-open ad on return).
-- Analytics: `app_update_prompt` — `type` (soft|hard), `choice` (shown|update|later), `app_version`, `target_version`.
+- Analytics: `app_update_prompt` — `type` (soft|hard), `choice` (shown|update|later, plus failed|unavailable|install for
+  Google), `ui` (custom|google), `app_version`, `target_version`.
+
+## Google Play in-app update (`update_ui: "google"`, Android)
+AdsKit still decides **when** (same versions, gate, cooldown and max shows); only the UI changes:
+- **Hard → Immediate update**: Play's full-screen download + install, then the app restarts.
+- **Soft → Flexible update**: Play's dialog; the download runs in the background while the player keeps playing. When it
+  finishes, AdsKit installs it (`completeUpdate`, Play's install screen + restart) at the next `CanShowSoft` moment.
+- **Fallback to the game's popup** (same session): Play reports no update (the store build isn't newer than this
+  install's versionCode yet, staged rollout not reaching this user), Play isn't available (sideloaded / editor / no Play
+  Store / library missing), the flow fails, or the player **cancels a hard update** (the game's blocking popup then
+  appears; its Update button tries Play again, else opens the store).
+- Play compares **versionCode**, AdsKit compares **versionName** (`Application.version`): bump both every release.
+- Dependency: `Editor/AdsKitAppUpdateDependencies.xml` adds `com.google.android.play:app-update:2.1.0` through the
+  External Dependency Manager. After updating AdsKit, run **Assets > External Dependency Manager > Android Resolver >
+  Force Resolve** and check the line is in `mainTemplate.gradle`.
+- **Testing** needs a build installed from Google Play: use internal app sharing or an internal test track, install the
+  older build from Play, then upload a newer one. Debug / sideloaded builds always fall back to the game's popup.
 
 ## Integration
 ```csharp

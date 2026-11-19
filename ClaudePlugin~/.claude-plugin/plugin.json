@@ -1,6 +1,6 @@
 ﻿{
   "name": "adskit",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "Integrate and update the AdsKit (com.ninedtech.adskit) and IapKit (com.ninedtech.iapkit) Unity packages in a Unity game, and add AdsKit soft/hard app update prompts.",
   "author": {
     "name": "hassanraza-collab"

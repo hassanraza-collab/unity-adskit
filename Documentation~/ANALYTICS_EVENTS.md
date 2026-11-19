@@ -38,7 +38,7 @@
 | `welcome_back_shown` | `placement` (= `app_open_resume`), `ad_format`. The Welcome Back screen opened on a return from the background. |
 | `welcome_back_closed` | `placement`, `ad_format`, `reason` (`ad_shown` \| `ad_failed` \| `timeout`), `shown_sec`. |
 | `ad_revenue_tier_<N>` | `value`, `currency`. Logged once when the total ad revenue passes `revenue_tiers_usd[N-1]`. |
-| `app_update_prompt` | `type` (soft / hard), `choice` (shown / update / later), `app_version`, `target_version`. Soft / hard update prompts (`AppUpdate`, Remote Config `app_update_config`). |
+| `app_update_prompt` | `type` (soft / hard), `choice` (shown / update / later; Google also failed / unavailable / install), `ui` (custom / google), `app_version`, `target_version`. Soft / hard update prompts (`AppUpdate`, Remote Config `app_update_config`). |
 
 ## Logged through helpers the game calls
 | Event | Helper | Parameters |

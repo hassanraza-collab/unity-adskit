@@ -1,6 +1,6 @@
 ---
 name: appupdate-integrate
-description: Add soft / hard app update prompts (release management, forced update) to the current Unity game with AdsKit's AppUpdate module, driven by the Firebase Remote Config parameter app_update_config. First fetches and pulls the latest game and AdsKit code. Use when the user asks for update prompts, force update, soft/hard update, minimum version or release management. Requires AdsKit to be integrated first.
+description: Add soft / hard app update prompts (release management, forced update; our popup or Google Play in-app update, switchable remotely) to the current Unity game with AdsKit's AppUpdate module, driven by the Firebase Remote Config parameter app_update_config. First fetches and pulls the latest game and AdsKit code. Use when the user asks for update prompts, force update, soft/hard update, minimum version or release management. Requires AdsKit to be integrated first.
 ---
 
 # Add app update prompts (AdsKit AppUpdate) to this game
@@ -93,8 +93,12 @@ Give the user the JSON. **Never publish Remote Config changes without asking fir
 Safe Android default (prompts nobody):
 
 ```json
-{"enabled":true,"latest_version":"<current Application.version>","min_version":"","soft_cooldown_hours":24,"soft_max_shows":3,"store_url":"market://details?id=<android bundle id>","soft_message":"","hard_message":""}
+{"enabled":true,"latest_version":"<current Application.version>","min_version":"","soft_cooldown_hours":24,"soft_max_shows":3,"store_url":"market://details?id=<android bundle id>","update_ui":"custom","soft_message":"","hard_message":""}
 ```
+
+- **`update_ui`** (Android): `"custom"` uses the game's popup; `"google"` uses Google Play in-app update (hard = immediate, soft = flexible), with the game's popup as the fallback. Ask the user which one they want. It can be switched remotely at any time.
+- **Google mode needs** `com.google.android.play:app-update` in the Gradle build. AdsKit's `Editor/AdsKitAppUpdateDependencies.xml` adds it through the External Dependency Manager. After updating AdsKit, have the user run **Android Resolver > Force Resolve** (or add the line yourself next to the other `implementation` lines in `Assets/Plugins/Android/mainTemplate.gradle`). Confirm the line is there.
+- Play compares **versionCode**: remind the user to bump it with the version name every release.
 
 - **iOS:** add a platform condition value with `"enabled":false` until the App Store ID exists. Then set `"store_url":"itms-apps://apps.apple.com/app/id<APPID>"`, the iOS `latest_version`, and `enabled` to true.
 - Old builds without AppUpdate ignore the parameter, so creating it is harmless.
@@ -111,7 +115,8 @@ Safe Android default (prompts nobody):
    - **soft:** Later, X and Update each close it;
    - **hard:** no X, Back does nothing, stays on top;
    - if possible, a QA override with `latest_version` above the current version: the soft prompt shows once, on the home screen only.
-4. Analytics: `app_update_prompt` (`type`, `choice`, `app_version`, `target_version`) is logged by AdsKit. Add it to the game's analytics doc if it keeps one.
+   - Google mode can't be tested in the editor or on sideloaded builds (they fall back to the game's popup). Tell the user to test it through internal app sharing or an internal test track: install the older build from Play, then upload a newer one.
+4. Analytics: `app_update_prompt` (`type`, `choice`, `ui`, `app_version`, `target_version`) is logged by AdsKit. Add it to the game's analytics doc if it keeps one.
 5. **Don't commit until the user approves.**
 
 Report:
